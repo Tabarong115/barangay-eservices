@@ -27,6 +27,17 @@ def is_supabase_connected() -> bool:
     return supabase is not None
 
 
+def get_supabase_debug_status() -> Dict[str, Any]:
+    """Return a simple debug summary for Supabase initialization."""
+    config = Config()
+    return {
+        "configured": config.supabase_is_configured,
+        "url_present": bool(config.SUPABASE_URL),
+        "anon_key_present": bool(config.SUPABASE_ANON_KEY),
+        "client_initialized": supabase is not None,
+    }
+
+
 def create_service_request(
     service_type: str,
     reference_number: str,

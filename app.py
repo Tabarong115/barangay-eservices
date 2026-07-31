@@ -15,6 +15,7 @@ from werkzeug.utils import secure_filename
 from config import Config
 from database import (
     is_supabase_connected,
+    get_supabase_debug_status,
     create_service_request,
     get_service_request_by_reference,
     get_all_service_requests,
@@ -41,6 +42,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config.from_object(Config())
+
+print("[DEBUG] Supabase init status:", get_supabase_debug_status())
 
 UPLOAD_DIRECTORY = Path(app.root_path) / "uploads"
 UPLOAD_DIRECTORY.mkdir(exist_ok=True)
