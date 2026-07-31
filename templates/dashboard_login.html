@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Sign In | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="content-section narrow login-page">
+    <p class="eyebrow">Staff access</p>
+    <h1>Dashboard sign in</h1>
+    <p class="muted">For the Secretary, Treasurer, and Punong Barangay only.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}
+    {% endwith %}
+    <form class="request-form" method="post">
+      <label for="username">Username</label>
+      <input id="username" name="username" required autocomplete="username">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password">
+      <button class="primary-button" type="submit">Sign in</button>
+    </form>
+    <p class="privacy-note">This is a local pilot login. Supabase Authentication will replace these accounts before actual use.</p>
+  </section>
+{% endblock %}

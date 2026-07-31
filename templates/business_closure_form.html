@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Business Closure Certification | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="form-hero">
+    <p class="eyebrow">Pilot online service</p>
+    <h1>Business Closure Certification</h1>
+    <p>Complete this form to request a Business Closure Certification when closing your business operations.</p>
+  </section>
+
+  <section class="content-section narrow">
+    <div class="service-summary">
+      <div><span>Fee</span><strong>₱50.00</strong></div>
+      <div><span>Processing time</span><strong>10 minutes</strong></div>
+      <div><span>Office</span><strong>Barangay Hall</strong></div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form class="request-form" method="post" enctype="multipart/form-data" novalidate>
+      <h2>Business information</h2>
+      <p class="muted">All fields are required for this pilot.</p>
+      <label for="business_name">Business name</label>
+      <input id="business_name" name="business_name" value="{{ form_data.get('business_name', '') }}" required>
+      <label for="business_address">Business address in Barangay 7</label>
+      <textarea id="business_address" name="business_address" rows="3" required>{{ form_data.get('business_address', '') }}</textarea>
+      <label for="business_type">Business type</label>
+      <select id="business_type" name="business_type" required>
+        <option value="">Select business type</option>
+        <option value="Sole Proprietorship" {% if form_data.get('business_type') == 'Sole Proprietorship' %}selected{% endif %}>Sole Proprietorship</option>
+        <option value="Partnership" {% if form_data.get('business_type') == 'Partnership' %}selected{% endif %}>Partnership</option>
+        <option value="Corporation" {% if form_data.get('business_type') == 'Corporation' %}selected{% endif %}>Corporation</option>
+      </select>
+      <label for="owner_name">Owner name</label>
+      <input id="owner_name" name="owner_name" value="{{ form_data.get('owner_name', '') }}" required autocomplete="name">
+      <label for="contact_number">Contact number</label>
+      <input id="contact_number" name="contact_number" value="{{ form_data.get('contact_number', '') }}" required inputmode="tel" autocomplete="tel">
+      <div class="form-row">
+        <div>
+          <label for="sex_at_birth">Sex at birth</label>
+          <select id="sex_at_birth" name="sex_at_birth" required>
+            <option value="">Select an option</option>
+            {% for option in ['Female', 'Male', 'Intersex', 'Prefer not to say'] %}
+              <option value="{{ option }}" {% if form_data.get('sex_at_birth') == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="gender">Gender</label>
+          <select id="gender" name="gender" required>
+            <option value="">Select an option</option>
+            {% for option in ['Woman', 'Man', 'Non-binary', 'Prefer to self-describe', 'Prefer not to say'] %}
+              <option value="{{ option }}" {% if form_data.get('gender') == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <label for="closure_date">Closure date</label>
+      <input id="closure_date" name="closure_date" type="date" value="{{ form_data.get('closure_date', '') }}" required>
+      <label for="reason">Reason for closure</label>
+      <textarea id="reason" name="reason" rows="3" required placeholder="Briefly explain why the business is closing">{{ form_data.get('reason', '') }}</textarea>
+      <label for="email">Email address <span class="optional">(optional)</span></label>
+      <input id="email" name="email" type="email" value="{{ form_data.get('email', '') }}" autocomplete="email" placeholder="For future status notifications">
+      <label for="id_photo">Upload ID photo <span class="optional">(optional)</span></label>
+      <input id="id_photo" name="id_photo" type="file" accept="image/jpeg,image/png" aria-describedby="id-photo-help">
+      <p class="field-help" id="id-photo-help">JPG or PNG only, maximum 5 MB. Use a sample image only during this local pilot.</p>
+      {% include 'camera_capture.html' %}
+      <p class="privacy-note">For testing only: do not submit sensitive or real business information until the secure Supabase database and staff access controls are implemented.</p>
+      <button class="primary-button" type="submit">Submit test request</button>
+    </form>
+  </section>
+{% endblock %}

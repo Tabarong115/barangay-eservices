@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Track Request | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="content-section narrow lookup-page">
+    <p class="eyebrow">Request tracking</p>
+    <h1>Track your request</h1>
+    <p>Enter the tracking number provided after you submitted your online request.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+    <form class="request-form" method="post">
+      <label for="reference_number">Tracking number</label>
+      <input id="reference_number" name="reference_number" required placeholder="Example: BC-20260730-001" autocomplete="off" autofocus>
+      <p class="field-help">Your tracking number begins with <strong>BC-</strong> for Barangay Clearance.</p>
+      <button class="primary-button" type="submit">Track request</button>
+    </form>
+    <a class="text-link" href="{{ url_for('public_portal') }}">Need to make a new request?</a>
+  </section>
+{% endblock %}

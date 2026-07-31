@@ -1,0 +1,270 @@
+<div class="camera-capture-container">
+  <label for="selfie_photo" class="camera-label">Selfie Verification <span class="required">*</span></label>
+  <p class="field-help">Position your face within the circle and click "Capture Selfie" to take your photo for identity verification.</p>
+  
+  <div class="camera-wrapper">
+    <div class="camera-preview" id="cameraPreview">
+      <video id="videoElement" autoplay playsinline></video>
+      <div class="face-guide"></div>
+      <div class="camera-overlay">
+        <button type="button" class="capture-button" id="captureButton">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          Capture Selfie
+        </button>
+      </div>
+    </div>
+    
+    <div class="captured-image" id="capturedImage" style="display: none;">
+      <img id="selfiePreview" alt="Captured selfie">
+      <button type="button" class="retake-button" id="retakeButton">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"/>
+          <path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Retake
+      </button>
+    </div>
+  </div>
+  
+  <input type="hidden" id="selfie_photo" name="selfie_photo" value="{{ form_data.get('selfie_photo', '') }}">
+  <canvas id="canvasElement" style="display: none;"></canvas>
+</div>
+
+<style>
+.camera-capture-container {
+  margin: 20px 0;
+}
+
+.camera-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1F2937;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #DC2626;
+}
+
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.camera-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.face-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.camera-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+.capture-button {
+  background: #12335B;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.capture-button:hover {
+  background: #1a4a8a;
+  transform: translateY(-2px);
+}
+
+.capture-button:active {
+  transform: translateY(0);
+}
+
+.captured-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+#selfiePreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.retake-button {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.retake-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.camera-error {
+  background: #FEE2E2;
+  color: #DC2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+}
+
+.camera-error.show {
+  display: block;
+}
+</style>
+
+<script>
+(function() {
+  const video = document.getElementById('videoElement');
+  const canvas = document.getElementById('canvasElement');
+  const captureButton = document.getElementById('captureButton');
+  const retakeButton = document.getElementById('retakeButton');
+  const cameraPreview = document.getElementById('cameraPreview');
+  const capturedImage = document.getElementById('capturedImage');
+  const selfiePreview = document.getElementById('selfiePreview');
+  const selfieInput = document.getElementById('selfie_photo');
+  
+  let stream = null;
+  
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 640 }
+        }
+      });
+      video.srcObject = stream;
+    } catch (error) {
+      console.error('Camera access error:', error);
+      showError('Unable to access camera. Please ensure camera permissions are granted or use a device with a camera.');
+    }
+  }
+  
+  function captureSelfie() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    
+    // Mirror the captured image horizontally
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0);
+    
+    // Convert to base64
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    selfiePreview.src = imageData;
+    selfieInput.value = imageData;
+    
+    // Show captured image, hide camera
+    cameraPreview.style.display = 'none';
+    capturedImage.style.display = 'block';
+    
+    // Stop camera stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  }
+  
+  function retakeSelfie() {
+    // Reset
+    selfieInput.value = '';
+    capturedImage.style.display = 'none';
+    cameraPreview.style.display = 'block';
+    
+    // Restart camera
+    startCamera();
+  }
+  
+  function showError(message) {
+    let errorDiv = document.querySelector('.camera-error');
+    if (!errorDiv) {
+      errorDiv = document.createElement('div');
+      errorDiv.className = 'camera-error';
+      cameraPreview.parentNode.insertBefore(errorDiv, cameraPreview.nextSibling);
+    }
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+  }
+  
+  captureButton.addEventListener('click', captureSelfie);
+  retakeButton.addEventListener('click', retakeSelfie);
+  
+  // Start camera when page loads
+  startCamera();
+  
+  // Clean up when form is submitted
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    });
+  }
+})();
+</script>

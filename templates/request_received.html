@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Request Received | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="content-section narrow confirmation">
+    <p class="eyebrow">Pilot request received</p>
+    <h1>Your Barangay Clearance request was submitted.</h1>
+    <p>Your test reference number is:</p>
+    <div class="reference-row"><p class="reference-number" id="tracking-number">{{ clearance_request.reference_number }}</p><button class="copy-button" type="button" data-copy-target="tracking-number">Copy number</button></div>
+    <div class="confirmation-box">
+      <p><strong>Applicant:</strong> {{ clearance_request.full_name }}</p>
+      <p><strong>Birthday / Civil status:</strong> {{ clearance_request.birthday }} · {{ clearance_request.civil_status }}</p>
+      <p><strong>Purpose:</strong> {{ clearance_request.purpose }}</p>
+      <p><strong>ID photo:</strong> {{ 'Received for pilot verification' if clearance_request.id_photo_filename else 'Not provided' }}</p>
+      <p><strong>Status:</strong> {{ clearance_request.status }}</p>
+    </div>
+    <p class="privacy-note">This is a local test only. The request is visible in the Secretary Dashboard while this server is running, and it will disappear when the server restarts.</p>
+    <a class="primary-button" href="{{ url_for('track_request', reference_number=clearance_request['reference_number']) }}">Track this request</a>
+    <a class="text-link" href="{{ url_for('public_portal') }}">Return to public portal</a>
+  </section>
+{% endblock %}

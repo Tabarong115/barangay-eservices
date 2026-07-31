@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Settings | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="dashboard-hero">
+    <p class="eyebrow">Admin settings</p>
+    <h1>Dashboard Settings</h1>
+    <p>Manage the Barangay logo and digital signatures used by the local pilot certificate generator.</p>
+  </section>
+  <section class="content-section">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="settings-grid">
+      <article class="settings-card">
+        <h2>Barangay logo</h2>
+        <p class="muted">Upload a logo displayed on pilot certificates and staff pages.</p>
+        {% if settings.barangay_logo_filename %}
+          <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.barangay_logo_filename) }}" alt="Current Barangay logo">
+          <form method="post">
+            <input type="hidden" name="action" value="delete_logo">
+            <button class="secondary-button" type="submit">Remove logo</button>
+          </form>
+        {% else %}
+          <p class="muted">No logo has been uploaded yet.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_logo">
+          <label for="barangay_logo">Select logo image</label>
+          <input id="barangay_logo" name="barangay_logo" type="file" accept="image/jpeg,image/png" required>
+          <button class="primary-button" type="submit">Upload logo</button>
+        </form>
+      </article>
+
+      <article class="settings-card">
+        <h2>Punong Barangay signature</h2>
+        <p class="muted">Upload the signature used on generated certificates.</p>
+        {% if settings.punong_barangay_signature_filename %}
+          <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.punong_barangay_signature_filename) }}" alt="Punong Barangay signature">
+          <form method="post">
+            <input type="hidden" name="action" value="delete_punong_signature">
+            <button class="secondary-button" type="submit">Remove signature</button>
+          </form>
+        {% else %}
+          <p class="muted">No Punong Barangay signature has been uploaded yet.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_punong_signature">
+          <label for="punong_barangay_signature">Select signature image</label>
+          <input id="punong_barangay_signature" name="punong_barangay_signature" type="file" accept="image/jpeg,image/png" required>
+          <button class="primary-button" type="submit">Upload signature</button>
+        </form>
+      </article>
+
+      <article class="settings-card">
+        <h2>Secretary signature</h2>
+        <p class="muted">Upload the Barangay Secretary signature used on certificates.</p>
+        {% if settings.secretary_signature_filename %}
+          <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.secretary_signature_filename) }}" alt="Barangay Secretary signature">
+          <form method="post">
+            <input type="hidden" name="action" value="delete_secretary_signature">
+            <button class="secondary-button" type="submit">Remove signature</button>
+          </form>
+        {% else %}
+          <p class="muted">No Barangay Secretary signature has been uploaded yet.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_secretary_signature">
+          <label for="secretary_signature">Select signature image</label>
+          <input id="secretary_signature" name="secretary_signature" type="file" accept="image/jpeg,image/png" required>
+          <button class="primary-button" type="submit">Upload signature</button>
+        </form>
+      </article>
+    </div>
+  </section>
+{% endblock %}

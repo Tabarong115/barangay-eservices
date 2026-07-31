@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Barangay Certification | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="form-hero">
+    <p class="eyebrow">Pilot online service</p>
+    <h1>Barangay Certification</h1>
+    <p>Complete this form to request a general Barangay Certification for various purposes.</p>
+  </section>
+
+  <section class="content-section narrow">
+    <div class="service-summary">
+      <div><span>Fee</span><strong>₱50.00</strong></div>
+      <div><span>Processing time</span><strong>10 minutes</strong></div>
+      <div><span>Office</span><strong>Barangay Hall</strong></div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form class="request-form" method="post" enctype="multipart/form-data" novalidate>
+      <h2>Applicant information</h2>
+      <p class="muted">All fields are required for this pilot.</p>
+      <label for="full_name">Full name</label>
+      <input id="full_name" name="full_name" value="{{ form_data.get('full_name', '') }}" required autocomplete="name">
+      <label for="address">Complete address in Barangay 7</label>
+      <textarea id="address" name="address" rows="3" required>{{ form_data.get('address', '') }}</textarea>
+      <label for="purpose">Purpose of certification</label>
+      <input id="purpose" name="purpose" value="{{ form_data.get('purpose', '') }}" required placeholder="Example: School enrollment, Bank account, Government transaction">
+      <label for="contact_number">Contact number</label>
+      <input id="contact_number" name="contact_number" value="{{ form_data.get('contact_number', '') }}" required inputmode="tel" autocomplete="tel">
+      <div class="form-row">
+        <div>
+          <label for="sex_at_birth">Sex at birth</label>
+          <select id="sex_at_birth" name="sex_at_birth" required>
+            <option value="">Select an option</option>
+            {% for option in ['Female', 'Male', 'Intersex', 'Prefer not to say'] %}
+              <option value="{{ option }}" {% if form_data.get('sex_at_birth') == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="gender">Gender</label>
+          <select id="gender" name="gender" required>
+            <option value="">Select an option</option>
+            {% for option in ['Woman', 'Man', 'Non-binary', 'Prefer to self-describe', 'Prefer not to say'] %}
+              <option value="{{ option }}" {% if form_data.get('gender') == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="birthday">Birthday</label>
+          <input id="birthday" name="birthday" type="date" value="{{ form_data.get('birthday', '') }}" required autocomplete="bday">
+        </div>
+        <div>
+          <label for="civil_status">Civil status</label>
+          <select id="civil_status" name="civil_status" required>
+            <option value="">Select an option</option>
+            {% for option in ['Single', 'Married', 'Widowed', 'Separated', 'Annulled'] %}
+              <option value="{{ option }}" {% if form_data.get('civil_status') == option %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <label for="email">Email address <span class="optional">(optional)</span></label>
+      <input id="email" name="email" type="email" value="{{ form_data.get('email', '') }}" autocomplete="email" placeholder="For future status notifications">
+      <label for="id_photo">Upload ID photo <span class="optional">(optional)</span></label>
+      <input id="id_photo" name="id_photo" type="file" accept="image/jpeg,image/png" aria-describedby="id-photo-help">
+      <p class="field-help" id="id-photo-help">JPG or PNG only, maximum 5 MB. Use a sample image only during this local pilot.</p>
+      {% include 'camera_capture.html' %}
+      <p class="privacy-note">For testing only: do not submit sensitive or real personal information until the secure Supabase database and staff access controls are implemented.</p>
+      <button class="primary-button" type="submit">Submit test request</button>
+    </form>
+  </section>
+{% endblock %}

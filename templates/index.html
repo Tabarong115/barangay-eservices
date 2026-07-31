@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Public Portal | Barangay 7 e-Services{% endblock %}
+{% block content %}
+  <section class="hero">
+    <p class="eyebrow">Municipality of Salcedo · Eastern Samar</p>
+    <h1>Barangay services, made simpler.</h1>
+    <p class="intro">This is the public starting point for online requests. Choose a service to view its availability.</p>
+    <div class="notice"><strong>For now:</strong> online requests are not yet active. Please visit the Barangay Hall for service.</div>
+  </section>
+
+  <section class="content-section" aria-labelledby="services-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Administrative services</p>
+        <h2 id="services-heading">Select a service</h2>
+      </div>
+      <p class="service-note">Standard processing time: 10 minutes when requirements are complete and the authorized official is available.</p>
+    </div>
+    <div class="service-grid">
+      {% for service in services %}
+        <article class="service-card">
+          <span class="service-icon" aria-hidden="true">{{ loop.index }}</span>
+          <h3>{{ service.name }}</h3>
+          <p class="fee">Fee: <strong>{{ service.fee }}</strong></p>
+          <p class="muted">{{ service.status }}</p>
+          {% if service.available %}
+            {% if service.name == "Barangay Clearance" %}
+              <a class="secondary-button" href="{{ url_for('barangay_clearance') }}">Request service</a>
+            {% elif service.name == "Barangay Certification" %}
+              <a class="secondary-button" href="{{ url_for('barangay_certification') }}">Request service</a>
+            {% elif service.name == "Certificate of Residency" %}
+              <a class="secondary-button" href="{{ url_for('certificate_of_residency') }}">Request service</a>
+            {% elif service.name == "Certificate of Indigency" %}
+              <a class="secondary-button" href="{{ url_for('certificate_of_indigency') }}">Request service</a>
+            {% elif service.name == "Business Closure Certification" %}
+              <a class="secondary-button" href="{{ url_for('business_closure') }}">Request service</a>
+            {% elif service.name == "First Time Job Seeker Certification" %}
+              <a class="secondary-button" href="{{ url_for('first_time_job_seeker') }}">Request service</a>
+            {% endif %}
+          {% else %}
+            <button type="button" class="secondary-button" data-coming-soon="{{ service.name }}">View service</button>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
