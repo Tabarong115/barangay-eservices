@@ -235,13 +235,28 @@ def update_barangay_settings(
         return False
     
     try:
-        # Update the existing settings row. The schema creates a row with id = 1.
-        supabase.table("barangay_settings").update({
-            "barangay_logo_filename": barangay_logo_filename,
-            "punong_barangay_signature_filename": punong_barangay_signature_filename,
-            "secretary_signature_filename": secretary_signature_filename
-        }).eq("id", 1).execute()
-        return True
+        # Get the existing settings row to find its actual UUID
+        result = supabase.table("barangay_settings").select("id").limit(1).execute()
+        if result.data:
+            row_id = result.data[0]["id"]
+            # Update the existing row with the correct UUID
+            supabase.table("barangay_settings").update({
+                "barangay_logo_filename": barangay_logo_filename,
+                "punong_barangay_signature_filename": punong_barangay_signature_filename,
+                "secretary_signature_filename": secretary_signature_filename
+            }).eq("id", row_id).execute()
+            return True
+        else:
+            # No settings row exists, create one
+            from uuid import uuid4
+            settings_id = str(uuid4())
+            supabase.table("barangay_settings").insert({
+                "id": settings_id,
+                "barangay_logo_filename": barangay_logo_filename,
+                "punong_barangay_signature_filename": punong_barangay_signature_filename,
+                "secretary_signature_filename": secretary_signature_filename
+            }).execute()
+            return True
     except Exception as e:
         print(f"Error updating barangay settings: {e}")
         return False

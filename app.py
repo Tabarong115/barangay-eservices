@@ -194,26 +194,39 @@ def load_pilot_settings():
         "punong_barangay_signature_filename": "",
         "secretary_signature_filename": "",
     }
+    
+    # Try Supabase first if connected
     if is_supabase_connected():
-        return get_barangay_settings()
+        supabase_settings = get_barangay_settings()
+        # If Supabase has data, return it
+        if any(supabase_settings.values()):
+            return supabase_settings
+        # If Supabase returns empty but local file exists, use local file as fallback
+    
+    # Fall back to local file
     if SETTINGS_FILE.exists():
         try:
             return {**defaults, **json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))}
         except (json.JSONDecodeError, OSError):
             return defaults
+    
     return defaults
 
 
 def save_pilot_settings(settings):
     """Save pilot settings for logo and signature assets."""
+    # Always save to local file as primary store and fallback
+    SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    
+    # Also try to sync to Supabase if connected
     if is_supabase_connected():
-        update_barangay_settings(
+        success = update_barangay_settings(
             barangay_logo_filename=settings.get("barangay_logo_filename", ""),
             punong_barangay_signature_filename=settings.get("punong_barangay_signature_filename", ""),
             secretary_signature_filename=settings.get("secretary_signature_filename", "")
         )
-    else:
-        SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+        if not success:
+            print("[WARNING] Failed to sync settings to Supabase, but local file saved")
 
 
 @app.get("/")

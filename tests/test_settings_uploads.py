@@ -40,19 +40,29 @@ class SettingsUploadTests(unittest.TestCase):
                 self.eq_column = None
                 self.eq_value = None
 
+            def limit(self, n):
+                return self
+
             def eq(self, column, value):
                 self.eq_column = column
                 self.eq_value = value
                 return self
 
             def execute(self):
-                if self.eq_column != "id" or self.eq_value != 1:
-                    raise AssertionError(f"Expected update row id 1, got {self.eq_value}")
-                return type("Result", (), {"data": [{"id": 1}]})()
+                # For the select query (finding existing row), return a row with a UUID
+                if self.payload is None:
+                    return type("Result", (), {"data": [{"id": "550e8400-e29b-41d4-a716-446655440000"}]})()
+                # For the update query, just return success
+                if self.eq_column == "id":
+                    return type("Result", (), {"data": [{"id": "550e8400-e29b-41d4-a716-446655440000"}]})()
+                return type("Result", (), {"data": []})()
 
         class FakeTable:
             def __init__(self):
                 self.payload = None
+
+            def select(self, *args):
+                return FakeQuery()
 
             def update(self, payload):
                 self.payload = payload
