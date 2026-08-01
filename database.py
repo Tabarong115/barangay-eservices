@@ -235,12 +235,12 @@ def update_barangay_settings(
         return False
     
     try:
-        # Update the first (and only) settings row
+        # Update the existing settings row. The schema creates a row with id = 1.
         supabase.table("barangay_settings").update({
             "barangay_logo_filename": barangay_logo_filename,
             "punong_barangay_signature_filename": punong_barangay_signature_filename,
             "secretary_signature_filename": secretary_signature_filename
-        }).eq("id", "00000000-0000-0000-0000-000000000000").execute()
+        }).eq("id", 1).execute()
         return True
     except Exception as e:
         print(f"Error updating barangay settings: {e}")

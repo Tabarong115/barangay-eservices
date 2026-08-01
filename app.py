@@ -1035,7 +1035,7 @@ def dashboard_settings():
                 logo = request.files.get("barangay_logo")
                 if not logo or not logo.filename:
                     raise ValueError("Select a Barangay logo image to upload.")
-                filename = save_pilot_image(logo, "logo", "barangay-assets" if is_supabase_connected() else None)
+                filename = save_pilot_image(logo, "logo", "logos" if is_supabase_connected() else None)
                 delete_pilot_file(settings.get("barangay_logo_filename", ""))
                 settings["barangay_logo_filename"] = filename
                 flash("Barangay logo uploaded successfully.", "success")
@@ -1047,7 +1047,7 @@ def dashboard_settings():
                 signature = request.files.get("punong_barangay_signature")
                 if not signature or not signature.filename:
                     raise ValueError("Select the Punong Barangay signature image to upload.")
-                filename = save_pilot_image(signature, "signature_punong", "barangay-assets" if is_supabase_connected() else None)
+                filename = save_pilot_image(signature, "signature_punong", "signatures" if is_supabase_connected() else None)
                 delete_pilot_file(settings.get("punong_barangay_signature_filename", ""))
                 settings["punong_barangay_signature_filename"] = filename
                 flash("Punong Barangay signature uploaded successfully.", "success")
@@ -1059,7 +1059,7 @@ def dashboard_settings():
                 signature = request.files.get("secretary_signature")
                 if not signature or not signature.filename:
                     raise ValueError("Select the Barangay Secretary signature image to upload.")
-                filename = save_pilot_image(signature, "signature_secretary", "barangay-assets" if is_supabase_connected() else None)
+                filename = save_pilot_image(signature, "signature_secretary", "signatures" if is_supabase_connected() else None)
                 delete_pilot_file(settings.get("secretary_signature_filename", ""))
                 settings["secretary_signature_filename"] = filename
                 flash("Barangay Secretary signature uploaded successfully.", "success")
