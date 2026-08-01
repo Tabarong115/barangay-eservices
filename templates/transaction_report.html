@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Report - Barangay e-Services{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #333;
+    padding-bottom: 1rem;
+  }
+
+  .report-header h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  .print-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .print-button:hover {
+    background-color: #0056b3;
+  }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .summary-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 1.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .summary-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .summary-card .value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+  }
+
+  .service-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .service-card {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    padding: 1rem;
+    border-radius: 0.25rem;
+  }
+
+  .service-card h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+  }
+
+  .service-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .service-stat-row:last-child {
+    border-bottom: none;
+  }
+
+  .service-stat-label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  .service-stat-value {
+    font-weight: 600;
+    color: #333;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: 2rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    margin-top: 1rem;
+  }
+
+  thead {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.9rem;
+  }
+
+  tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .status-approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+
+  .status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .status-payment {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+
+  .status-approval {
+    background-color: #cce5ff;
+    color: #004085;
+  }
+
+  .generated-date {
+    text-align: right;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  @media print {
+    .print-button {
+      display: none;
+    }
+
+    .report-container {
+      max-width: 100%;
+      padding: 0;
+    }
+
+    body {
+      background-color: white;
+    }
+
+    .summary-cards {
+      page-break-inside: avoid;
+    }
+
+    .service-card {
+      page-break-inside: avoid;
+    }
+
+    table {
+      page-break-inside: avoid;
+    }
+
+    tbody tr {
+      page-break-inside: avoid;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    tfoot {
+      display: table-footer-group;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  <div class="report-header">
+    <h1>Transaction Report</h1>
+    <button class="print-button" onclick="window.print()">Print Report</button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <h3>Total Requests</h3>
+      <div class="value">{{ total_requests }}</div>
+    </div>
+    <div class="summary-card" style="border-left-color: #28a745;">
+      <h3>Completed</h3>
+      <div class="value" style="color: #28a745;">{{ completed_requests }}</div>
+    </div>
+    <div class="summary-card" style="border-left-color: #ffc107;">
+      <h3>Pending</h3>
+      <div class="value" style="color: #ffc107;">{{ pending_requests }}</div>
+    </div>
+    <div class="summary-card" style="border-left-color: #17a2b8;">
+      <h3>Completion Rate</h3>
+      <div class="value" style="color: #17a2b8;">
+        {% if total_requests > 0 %}
+          {{ "%.1f" % (completed_requests * 100 / total_requests) }}%
+        {% else %}
+          0%
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown by Service Type -->
+  <div class="section-title">Breakdown by Service Type</div>
+  <div class="service-stats">
+    {% for service_type, data in stats|dictsort %}
+      <div class="service-card">
+        <h4>{{ service_type }}</h4>
+        <div class="service-stat-row">
+          <span class="service-stat-label">Total:</span>
+          <span class="service-stat-value">{{ data.total }}</span>
+        </div>
+        <div class="service-stat-row">
+          <span class="service-stat-label">Completed:</span>
+          <span class="service-stat-value">{{ data.completed }}</span>
+        </div>
+        <div class="service-stat-row">
+          <span class="service-stat-label">Pending Review:</span>
+          <span class="service-stat-value">{{ data.pending }}</span>
+        </div>
+        <div class="service-stat-row">
+          <span class="service-stat-label">Awaiting Payment:</span>
+          <span class="service-stat-value">{{ data.awaiting_payment }}</span>
+        </div>
+        <div class="service-stat-row">
+          <span class="service-stat-label">Awaiting Approval:</span>
+          <span class="service-stat-value">{{ data.awaiting_approval }}</span>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Detailed Requests Table -->
+  <div class="section-title">All Requests ({{ all_requests|length }} Total)</div>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Reference #</th>
+          <th>Full Name</th>
+          <th>Service Type</th>
+          <th>Status</th>
+          <th>Contact Number</th>
+          <th>Email</th>
+          <th>Submitted Date</th>
+          <th>Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for request in all_requests %}
+          <tr>
+            <td><strong>{{ request.reference_number }}</strong></td>
+            <td>{{ request.full_name or request.owner_name or 'N/A' }}</td>
+            <td>{{ request.service_type or 'N/A' }}</td>
+            <td>
+              {% set status = request.status %}
+              {% if status == 'Approved' %}
+                <span class="status-badge status-approved">{{ status }}</span>
+              {% elif status == 'Pending Secretary Review' %}
+                <span class="status-badge status-pending">{{ status }}</span>
+              {% elif status == 'Awaiting Applicant GCash Payment' %}
+                <span class="status-badge status-payment">{{ status }}</span>
+              {% elif 'Approval' in status or 'Verification' in status %}
+                <span class="status-badge status-approval">{{ status }}</span>
+              {% else %}
+                <span class="status-badge status-pending">{{ status }}</span>
+              {% endif %}
+            </td>
+            <td>{{ request.contact_number or 'N/A' }}</td>
+            <td>{{ request.email or 'N/A' }}</td>
+            <td>
+              {% if request.submitted_at %}
+                {{ request.submitted_at.strftime('%Y-%m-%d %H:%M') if request.submitted_at else 'N/A' }}
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+            <td>{{ request.address or 'N/A' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="generated-date">
+    <p><strong>Report Generated:</strong> {{ now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
+  </div>
+</div>
+
+<script>
+  function getContextFunction(name) {
+    return function() { return new Date(); };
+  }
+  
+  // If 'now' function is not available in template context, define it here
+  if (typeof now === 'undefined') {
+    window.now = function() { return new Date(); };
+  }
+</script>
+{% endblock %}

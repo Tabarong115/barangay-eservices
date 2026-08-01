@@ -97,6 +97,15 @@ def pilot_users():
     }
 
 
+def is_service_free(service_type: str) -> bool:
+    """Check if a service requires payment or is free."""
+    free_services = {
+        "certificate_of_indigency",
+        "first_time_job_seeker",
+    }
+    return service_type in free_services
+
+
 def dashboard_login_required(view):
     """Keep the local dashboard inaccessible until a pilot staff member signs in."""
     @wraps(view)
@@ -970,6 +979,11 @@ def submit_payment(reference_number):
     if not clearance_request:
         abort(404)
     
+    # Free services should never require payment
+    if is_service_free(clearance_request.get("service_type", "")):
+        flash("This is a free service and does not require payment.", "error")
+        return redirect(url_for("track_request", reference_number=reference_number))
+    
     if clearance_request["status"] != "Awaiting Applicant GCash Payment":
         flash("Payment proof cannot be submitted at the current request stage.", "error")
         return redirect(url_for("track_request", reference_number=reference_number))
@@ -1234,24 +1248,44 @@ def advance_request(reference_number):
     if not clearance_request:
         abort(404)
     
+    # Get service type to determine workflow (free vs paid)
+    service_type = clearance_request.get("service_type")
+    is_free = is_service_free(service_type)
+    
     # Determine current status based on database vs in-memory
     if use_db:
         current_status = clearance_request["status"]
         # Map database status to legacy status for compatibility
-        status_mapping = {
-            "pending": "Pending Secretary Review",
-            "secretary_reviewed": "Awaiting Applicant GCash Payment",
-            "treasurer_verified": "Pending Punong Barangay Approval",
-        }
+        if is_free:
+            status_mapping = {
+                "pending": "Pending Secretary Review",
+                "secretary_reviewed": "Pending Punong Barangay Approval",
+                "approved": "Approved - Certificate ready for download",
+            }
+        else:
+            status_mapping = {
+                "pending": "Pending Secretary Review",
+                "secretary_reviewed": "Awaiting Applicant GCash Payment",
+                "treasurer_verified": "Pending Punong Barangay Approval",
+                "approved": "Approved - Certificate ready for download",
+            }
         display_status = status_mapping.get(current_status, current_status)
     else:
         display_status = clearance_request["status"]
     
-    allowed_transitions = {
-        ("Secretary", "Pending Secretary Review"): "Awaiting Applicant GCash Payment",
-        ("Treasurer", "Pending Treasurer Payment Verification"): "Pending Punong Barangay Approval",
-        ("Punong Barangay", "Pending Punong Barangay Approval"): "Approved - Certificate ready for download",
-    }
+    # Define allowed transitions based on service type (free vs paid)
+    if is_free:
+        allowed_transitions = {
+            ("Secretary", "Pending Secretary Review"): "Pending Punong Barangay Approval",
+            ("Punong Barangay", "Pending Punong Barangay Approval"): "Approved - Certificate ready for download",
+        }
+    else:
+        allowed_transitions = {
+            ("Secretary", "Pending Secretary Review"): "Awaiting Applicant GCash Payment",
+            ("Treasurer", "Pending Treasurer Payment Verification"): "Pending Punong Barangay Approval",
+            ("Punong Barangay", "Pending Punong Barangay Approval"): "Approved - Certificate ready for download",
+        }
+    
     next_status = allowed_transitions.get((session["staff_role"], display_status))
     if not next_status:
         abort(403)
@@ -1259,11 +1293,17 @@ def advance_request(reference_number):
     # Update status based on storage method
     if use_db:
         # Map to database status
-        db_status_mapping = {
-            "Awaiting Applicant GCash Payment": "secretary_reviewed",
-            "Pending Punong Barangay Approval": "treasurer_verified",
-            "Approved - Certificate ready for download": "chairman_approved",
-        }
+        if is_free:
+            db_status_mapping = {
+                "Pending Punong Barangay Approval": "secretary_reviewed",
+                "Approved - Certificate ready for download": "approved",
+            }
+        else:
+            db_status_mapping = {
+                "Awaiting Applicant GCash Payment": "secretary_reviewed",
+                "Pending Punong Barangay Approval": "treasurer_verified",
+                "Approved - Certificate ready for download": "approved",
+            }
         db_next_status = db_status_mapping.get(next_status, next_status)
         update_service_request_status(reference_number, db_next_status)
         
@@ -1348,6 +1388,88 @@ def advance_request(reference_number):
     
     flash(f"{reference_number} was forwarded successfully.", "success")
     return redirect(url_for("dashboard"))
+
+
+@app.get("/dashboard/reports")
+@dashboard_login_required
+def dashboard_reports():
+    """Show transaction history and statistics. Secretary only."""
+    role = session["staff_role"]
+    
+    # Only Secretary can access this
+    if role != "Secretary":
+        abort(403)
+    
+    # Gather all requests
+    if is_supabase_connected():
+        all_requests = get_all_service_requests()
+        # Map database status to display status
+        for req in all_requests:
+            if req["status"] == "pending":
+                req["status"] = "Pending Secretary Review"
+            elif req["status"] == "secretary_reviewed":
+                req["status"] = "Awaiting Applicant GCash Payment"
+            elif req["status"] == "treasurer_verified":
+                req["status"] = "Pending Punong Barangay Approval"
+            elif req["status"] == "approved":
+                req["status"] = "Approved"
+    else:
+        # In-memory fallback
+        all_requests = (
+            CLEARANCE_REQUESTS + 
+            CERTIFICATION_REQUESTS + 
+            RESIDENCY_REQUESTS + 
+            INDIGENCY_REQUESTS + 
+            BUSINESS_CLOSURE_REQUESTS + 
+            JOB_SEEKER_REQUESTS
+        )
+    
+    # Calculate statistics by service type
+    stats = {}
+    for req in all_requests:
+        service_type = req.get("service_type", "Unknown")
+        if service_type not in stats:
+            stats[service_type] = {
+                "total": 0,
+                "completed": 0,
+                "pending": 0,
+                "awaiting_payment": 0,
+                "awaiting_approval": 0,
+            }
+        
+        stats[service_type]["total"] += 1
+        
+        status = req.get("status", "")
+        if status == "Approved":
+            stats[service_type]["completed"] += 1
+        elif status == "Pending Secretary Review":
+            stats[service_type]["pending"] += 1
+        elif status == "Awaiting Applicant GCash Payment":
+            stats[service_type]["awaiting_payment"] += 1
+        elif status == "Pending Punong Barangay Approval" or status == "Pending Treasurer Payment Verification":
+            stats[service_type]["awaiting_approval"] += 1
+    
+    # Overall statistics
+    total_requests = len(all_requests)
+    completed_requests = sum(1 for req in all_requests if req.get("status") == "Approved")
+    pending_requests = total_requests - completed_requests
+    
+    # Sort requests by date (newest first)
+    sorted_requests = sorted(
+        all_requests,
+        key=lambda x: x.get("submitted_at", datetime.min),
+        reverse=True
+    )
+    
+    return render_template(
+        "transaction_report.html",
+        all_requests=sorted_requests,
+        stats=stats,
+        total_requests=total_requests,
+        completed_requests=completed_requests,
+        pending_requests=pending_requests,
+        now=datetime.now,
+    )
 
 
 if __name__ == "__main__":

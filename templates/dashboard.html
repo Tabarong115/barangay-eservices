@@ -9,6 +9,7 @@
         <p>Signed in as {{ username }}. {% if role == 'Secretary' %}You can view all requests to assist citizens who forgot their tracking numbers.{% else %}Only requests assigned to your current step are shown.{% endif %}</p>
       </div>
       <div class="dashboard-actions">
+        {% if role == 'Secretary' %}<a class="text-link" href="{{ url_for('dashboard_reports') }}">Reports</a>{% endif %}
         <a class="text-link" href="{{ url_for('dashboard_settings') }}">Settings</a>
       </div>
     </div>
@@ -42,7 +43,21 @@
               </div>
               {% if item.payment_proof_filename %}<a class="id-photo-link" href="{{ url_for('pilot_id_photo', filename=item.payment_proof_filename) }}" target="_blank">View payment proof · Ref. {{ item.payment_reference }}</a>{% endif %}
             </div>
-            <div class="request-action"><strong>{{ item.status }}</strong>{% if role != 'Secretary' or item.status == 'Pending Secretary Review' %}<form method="post" action="{{ url_for('advance_request', reference_number=item.reference_number) }}"><button class="primary-button" type="submit">{% if role == 'Secretary' %}Request GCash payment{% elif role == 'Treasurer' %}Verify payment & forward{% else %}Approve request{% endif %}</button></form>{% endif %}</div>
+            <div class="request-action">
+              <strong>{{ item.status }}</strong>
+              {% set is_free = item.service_type in ['certificate_of_indigency', 'first_time_job_seeker'] %}
+              {% if role != 'Secretary' or item.status == 'Pending Secretary Review' %}
+                <form method="post" action="{{ url_for('advance_request', reference_number=item.reference_number) }}">
+                  <button class="primary-button" type="submit">
+                    {% if role == 'Secretary' %}
+                      {% if is_free %}Approve & forward{% else %}Request GCash payment{% endif %}
+                    {% elif role == 'Treasurer' %}Verify payment & forward
+                    {% else %}Approve request
+                    {% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </div>
           </article>
         {% endfor %}
       </section>
