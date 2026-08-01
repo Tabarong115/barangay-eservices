@@ -1,4 +1,4 @@
-"""Entry point for the Barangay e-Services Portal Version 1 pilot."""
+"""Entry point for the Barangay e-Services Portal."""
 
 import os
 from datetime import datetime
@@ -69,13 +69,13 @@ def inject_settings():
 
 
 SERVICES = [
-    {"name": "Barangay Clearance", "fee": "₱50.00", "status": "Available for pilot testing", "available": True},
-    {"name": "Barangay Certification", "fee": "₱50.00", "status": "Available for pilot testing", "available": True},
-    {"name": "Certificate of Residency", "fee": "₱50.00", "status": "Available for pilot testing", "available": True},
-    {"name": "Certificate of Indigency", "fee": "Free", "status": "Available for pilot testing", "available": True},
-    {"name": "Business Closure Certification", "fee": "₱50.00", "status": "Available for pilot testing", "available": True},
+    {"name": "Barangay Clearance", "fee": "₱50.00", "status": "Available", "available": True},
+    {"name": "Barangay Certification", "fee": "₱50.00", "status": "Available", "available": True},
+    {"name": "Certificate of Residency", "fee": "₱50.00", "status": "Available", "available": True},
+    {"name": "Certificate of Indigency", "fee": "Free", "status": "Available", "available": True},
+    {"name": "Business Closure Certification", "fee": "₱50.00", "status": "Available", "available": True},
     {"name": "Barangay Permit", "fee": "₱50.00", "status": "Coming soon"},
-    {"name": "First Time Job Seeker Certification", "fee": "Free", "status": "Available for pilot testing", "available": True},
+    {"name": "First Time Job Seeker Certification", "fee": "Free", "status": "Available", "available": True},
 ]
 
 # Temporary pilot-only storage. It is intentionally replaced by Supabase before
@@ -114,13 +114,15 @@ def save_pilot_image(image_file, prefix, bucket_name=None):
         return ""
     if image_file.filename.split(".")[-1].lower() not in ALLOWED_IMAGE_EXTENSIONS:
         raise ValueError("Only JPG and PNG images are allowed.")
-    if len(image_file.read()) > MAX_ID_PHOTO_SIZE:
+    
+    # Read file data once for validation and storage
+    file_data = image_file.read()
+    if len(file_data) > MAX_ID_PHOTO_SIZE:
         raise ValueError("Image size exceeds the 5 MB limit.")
     image_file.seek(0)
     
     # Use Supabase Storage if connected and bucket is specified
     if is_supabase_connected() and bucket_name:
-        file_data = image_file.read()
         file_extension = image_file.filename.split('.')[-1].lower()
         content_type = "image/jpeg" if file_extension in ["jpg", "jpeg"] else "image/png"
         file_path = f"{prefix}/{uuid4()}.{file_extension}"
@@ -130,7 +132,8 @@ def save_pilot_image(image_file, prefix, bucket_name=None):
     
     # Fallback to local storage
     filename = f"{prefix}-{uuid4()}.{image_file.filename.split('.')[-1]}"
-    image_file.save(UPLOAD_DIRECTORY / filename)
+    with open(UPLOAD_DIRECTORY / filename, "wb") as f:
+        f.write(file_data)
     return filename
 
 
@@ -1129,33 +1132,48 @@ def dashboard_logout():
 def dashboard():
     """Show each local-pilot staff role its assigned step in the clearance workflow."""
     role = session["staff_role"]
-    status_for_role = {
-        "Secretary": "pending",
-        "Treasurer": "secretary_reviewed",
-        "Punong Barangay": "treasurer_verified",
-    }
     
     # Use Supabase if connected, otherwise fall back to in-memory
     if is_supabase_connected():
-        db_status = status_for_role[role]
-        assigned_requests = get_service_requests_by_status(db_status)
-        # Map database status to display status
-        for req in assigned_requests:
-            if req["status"] == "pending":
-                req["status"] = "Pending Secretary Review"
-            elif req["status"] == "secretary_reviewed":
-                req["status"] = "Awaiting Applicant GCash Payment"
-            elif req["status"] == "treasurer_verified":
-                req["status"] = "Pending Punong Barangay Approval"
+        # Secretary sees ALL requests, other roles see their assigned step
+        if role == "Secretary":
+            assigned_requests = get_all_service_requests()
+            # Map database status to display status
+            for req in assigned_requests:
+                if req["status"] == "pending":
+                    req["status"] = "Pending Secretary Review"
+                elif req["status"] == "secretary_reviewed":
+                    req["status"] = "Awaiting Applicant GCash Payment"
+                elif req["status"] == "treasurer_verified":
+                    req["status"] = "Pending Punong Barangay Approval"
+                elif req["status"] == "approved":
+                    req["status"] = "Approved"
+        else:
+            status_for_role = {
+                "Treasurer": "secretary_reviewed",
+                "Punong Barangay": "treasurer_verified",
+            }
+            db_status = status_for_role[role]
+            assigned_requests = get_service_requests_by_status(db_status)
+            # Map database status to display status
+            for req in assigned_requests:
+                if req["status"] == "secretary_reviewed":
+                    req["status"] = "Awaiting Applicant GCash Payment"
+                elif req["status"] == "treasurer_verified":
+                    req["status"] = "Pending Punong Barangay Approval"
     else:
         # Legacy status mapping for in-memory storage
-        legacy_status_for_role = {
-            "Secretary": "Pending Secretary Review",
-            "Treasurer": "Pending Treasurer Payment Verification",
-            "Punong Barangay": "Pending Punong Barangay Approval",
-        }
-        all_requests = CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
-        assigned_requests = [item for item in all_requests if item["status"] == legacy_status_for_role[role]]
+        if role == "Secretary":
+            # Secretary sees ALL requests
+            all_requests = CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
+            assigned_requests = all_requests
+        else:
+            legacy_status_for_role = {
+                "Treasurer": "Pending Treasurer Payment Verification",
+                "Punong Barangay": "Pending Punong Barangay Approval",
+            }
+            all_requests = CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
+            assigned_requests = [item for item in all_requests if item["status"] == legacy_status_for_role[role]]
     
     return render_template("dashboard.html", requests=assigned_requests, role=role, username=session["staff_username"])
 

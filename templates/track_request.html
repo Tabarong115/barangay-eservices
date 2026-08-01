@@ -3,9 +3,9 @@
 {% block content %}
   <section class="content-section narrow confirmation">
     <p class="eyebrow">Request tracking</p>
-    <h1>Barangay Clearance request</h1>
+    <h1>Request status</h1>
     <div class="reference-row"><p class="reference-number" id="tracking-number">{{ clearance_request.reference_number }}</p><button class="copy-button" type="button" data-copy-target="tracking-number">Copy number</button></div>
-    <div class="confirmation-box"><p><strong>Current status:</strong> {{ clearance_request.status }}</p><p><strong>Service:</strong> Barangay Clearance · ₱50.00</p></div>
+    <div class="confirmation-box"><p><strong>Current status:</strong> {{ clearance_request.status }}</p><p><strong>Service:</strong> {{ clearance_request.service_type if clearance_request.service_type else 'Barangay Clearance' }}</p></div>
     {% if clearance_request.status == 'Awaiting Applicant GCash Payment' %}
       <p>Your request has passed Secretary review. Submit your GCash payment details to continue.</p>
       <a class="primary-button" href="{{ url_for('submit_payment', reference_number=clearance_request['reference_number']) }}">Pay by GCash and upload proof</a>
@@ -14,8 +14,8 @@
     {% elif clearance_request.status == 'Pending Punong Barangay Approval' %}
       <p>Your payment has been verified and your request is awaiting approval.</p>
     {% elif clearance_request.status.startswith('Approved') %}
-      <p>Your request is approved. Your Barangay Clearance is ready.</p>
-      <a class="primary-button" href="{{ url_for('download_certificate', reference_number=clearance_request.reference_number) }}">Download Barangay Clearance PDF</a>
+      <p>Your request is approved. Your certificate is ready.</p>
+      <a class="primary-button" href="{{ url_for('download_certificate', reference_number=clearance_request.reference_number) }}">Download certificate PDF</a>
     {% else %}
       <p>Your request is awaiting Secretary review. Return here using this reference number after staff review is completed.</p>
     {% endif %}

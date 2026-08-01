@@ -2,19 +2,71 @@
 {% block title %}Request Received | Barangay 7 e-Services{% endblock %}
 {% block content %}
   <section class="content-section narrow confirmation">
-    <p class="eyebrow">Pilot request received</p>
-    <h1>Your Barangay Clearance request was submitted.</h1>
-    <p>Your test reference number is:</p>
-    <div class="reference-row"><p class="reference-number" id="tracking-number">{{ clearance_request.reference_number }}</p><button class="copy-button" type="button" data-copy-target="tracking-number">Copy number</button></div>
+    <p class="eyebrow">Request received</p>
+    <h1>Your request was submitted successfully.</h1>
+    <div class="tracking-notice">
+      <p><strong>Important:</strong> Save your tracking number now. You will need it to check your request status.</p>
+    </div>
+    <div class="reference-row">
+      <p class="reference-number" id="tracking-number">{{ clearance_request.reference_number }}</p>
+      <button class="copy-button" type="button" data-copy-target="tracking-number">Copy number</button>
+    </div>
+    <div class="action-buttons">
+      <button class="primary-button" type="button" onclick="downloadVoucher()">Download as Voucher</button>
+    </div>
     <div class="confirmation-box">
-      <p><strong>Applicant:</strong> {{ clearance_request.full_name }}</p>
-      <p><strong>Birthday / Civil status:</strong> {{ clearance_request.birthday }} · {{ clearance_request.civil_status }}</p>
-      <p><strong>Purpose:</strong> {{ clearance_request.purpose }}</p>
-      <p><strong>ID photo:</strong> {{ 'Received for pilot verification' if clearance_request.id_photo_filename else 'Not provided' }}</p>
+      <p><strong>Applicant:</strong> {{ clearance_request.full_name if clearance_request.full_name else clearance_request.owner_name }}</p>
+      <p><strong>Birthday / Civil status:</strong> {{ clearance_request.birthday if clearance_request.birthday else 'N/A' }} · {{ clearance_request.civil_status if clearance_request.civil_status else 'N/A' }}</p>
+      <p><strong>Purpose:</strong> {{ clearance_request.purpose if clearance_request.purpose else clearance_request.reason if clearance_request.reason else 'N/A' }}</p>
+      <p><strong>ID photo:</strong> {{ 'Received' if clearance_request.id_photo_filename else 'Not provided' }}</p>
       <p><strong>Status:</strong> {{ clearance_request.status }}</p>
     </div>
-    <p class="privacy-note">This is a local test only. The request is visible in the Secretary Dashboard while this server is running, and it will disappear when the server restarts.</p>
+    <p class="privacy-note">Your request is being processed. You can track its status using the reference number provided.</p>
     <a class="primary-button" href="{{ url_for('track_request', reference_number=clearance_request['reference_number']) }}">Track this request</a>
     <a class="text-link" href="{{ url_for('public_portal') }}">Return to public portal</a>
   </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function downloadVoucher() {
+  const trackingNumber = document.getElementById('tracking-number').textContent.trim();
+  const applicantName = "{{ clearance_request.full_name if clearance_request.full_name else clearance_request.owner_name }}";
+  const status = "{{ clearance_request.status }}";
+  const currentDate = new Date().toLocaleDateString('en-PH', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  const voucherContent = `
+==========================================
+    BARANGAY 7 E-SERVICES VOUCHER
+==========================================
+
+Tracking Number: ${trackingNumber}
+Applicant Name: ${applicantName}
+Request Status: ${status}
+Date Submitted: ${currentDate}
+
+==========================================
+IMPORTANT: Keep this voucher safe. You will
+need your tracking number to check your request
+status and for any inquiries.
+
+Barangay 7, Poblacion, Salcedo, Eastern Samar
+==========================================
+  `;
+  
+  const blob = new Blob([voucherContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `voucher_${trackingNumber}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
 {% endblock %}

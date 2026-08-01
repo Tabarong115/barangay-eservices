@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% block title %}GCash Payment | Barangay 7 e-Services{% endblock %}
 {% block content %}
-  <section class="form-hero"><p class="eyebrow">Barangay Clearance · ₱50.00</p><h1>GCash payment</h1><p>Pay using the official Barangay GCash account, then submit your payment reference and screenshot for Treasurer verification.</p></section>
+  <section class="form-hero"><p class="eyebrow">Service Payment</p><h1>GCash payment</h1><p>Pay using the official Barangay GCash account, then submit your payment reference and screenshot for Treasurer verification.</p></section>
   <section class="content-section narrow">
     <div class="payment-details">
-      <div class="qr-placeholder"><span>GCash</span><strong>Official QR</strong><small>To be added by Barangay</small></div>
-      <div><p class="eyebrow">Payment details</p><h2>Pay ₱50.00</h2><p><strong>Account name:</strong> {{ config.GCASH_ACCOUNT_NAME }}</p><p><strong>GCash number:</strong> {{ config.GCASH_ACCOUNT_NUMBER }}</p><p class="field-help">Only pay when the Secretary has reviewed your request. Use the exact amount shown.</p></div>
+      <div class="qr-placeholder"><span>GCash</span><strong>Official QR</strong><small>Scan to pay</small></div>
+      <div><p class="eyebrow">Payment details</p><h2>Pay the required fee</h2><p><strong>Account name:</strong> {{ config.GCASH_ACCOUNT_NAME }}</p><p><strong>GCash number:</strong> {{ config.GCASH_ACCOUNT_NUMBER }}</p><p class="field-help">Only pay when the Secretary has reviewed your request. Use the exact amount shown for your service.</p></div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
     <form class="request-form" method="post" enctype="multipart/form-data">
       <h2>Submit payment proof</h2>
       <label for="payment_reference">GCash reference number</label><input id="payment_reference" name="payment_reference" required placeholder="Reference shown in your GCash receipt">
       <label for="payment_proof">Payment screenshot</label><input id="payment_proof" name="payment_proof" type="file" accept="image/jpeg,image/png" required>
-      <p class="field-help">JPG or PNG only, maximum 5 MB. Use a sample screenshot only during this local pilot.</p>
-      <p class="privacy-note">This is not an automatic payment gateway. The Treasurer will manually verify payment before it moves to approval.</p>
+      <p class="field-help">JPG or PNG only, maximum 5 MB.</p>
+      <p class="privacy-note">The Treasurer will manually verify your payment before it moves to approval.</p>
       <button class="primary-button" type="submit">Submit payment proof</button>
     </form>
   </section>

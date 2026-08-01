@@ -6,6 +6,7 @@
     <meta name="description" content="Barangay 7 e-Services Portal">
     <title>{% block title %}Barangay 7 e-Services Portal{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
   </head>
   <body class="with-logo-background">
     {% if barangay_logo_filename %}
@@ -37,8 +38,9 @@
     <main>{% block content %}{% endblock %}</main>
     <footer class="site-footer">
       <p>Barangay 7, Poblacion, Salcedo, Eastern Samar</p>
-      <p>Version 1 starter · Services are currently for display only.</p>
+      <p>Official e-Services Portal · Serving the community with digital efficiency.</p>
     </footer>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

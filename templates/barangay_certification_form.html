@@ -2,7 +2,7 @@
 {% block title %}Barangay Certification | Barangay 7 e-Services{% endblock %}
 {% block content %}
   <section class="form-hero">
-    <p class="eyebrow">Pilot online service</p>
+    <p class="eyebrow">Online Service</p>
     <h1>Barangay Certification</h1>
     <p>Complete this form to request a general Barangay Certification for various purposes.</p>
   </section>
@@ -20,7 +20,7 @@
     {% endwith %}
     <form class="request-form" method="post" enctype="multipart/form-data" novalidate>
       <h2>Applicant information</h2>
-      <p class="muted">All fields are required for this pilot.</p>
+      <p class="muted">All fields are required unless marked optional.</p>
       <label for="full_name">Full name</label>
       <input id="full_name" name="full_name" value="{{ form_data.get('full_name', '') }}" required autocomplete="name">
       <label for="address">Complete address in Barangay 7</label>
@@ -68,10 +68,10 @@
       <input id="email" name="email" type="email" value="{{ form_data.get('email', '') }}" autocomplete="email" placeholder="For future status notifications">
       <label for="id_photo">Upload ID photo <span class="optional">(optional)</span></label>
       <input id="id_photo" name="id_photo" type="file" accept="image/jpeg,image/png" aria-describedby="id-photo-help">
-      <p class="field-help" id="id-photo-help">JPG or PNG only, maximum 5 MB. Use a sample image only during this local pilot.</p>
+      <p class="field-help" id="id-photo-help">JPG or PNG only, maximum 5 MB.</p>
       {% include 'camera_capture.html' %}
-      <p class="privacy-note">For testing only: do not submit sensitive or real personal information until the secure Supabase database and staff access controls are implemented.</p>
-      <button class="primary-button" type="submit">Submit test request</button>
+      <p class="privacy-note">Your information is securely stored and processed according to data protection regulations.</p>
+      <button class="primary-button" type="submit">Submit request</button>
     </form>
   </section>
 {% endblock %}

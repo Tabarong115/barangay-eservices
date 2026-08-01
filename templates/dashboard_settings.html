@@ -4,7 +4,7 @@
   <section class="dashboard-hero">
     <p class="eyebrow">Admin settings</p>
     <h1>Dashboard Settings</h1>
-    <p>Manage the Barangay logo and digital signatures used by the local pilot certificate generator.</p>
+    <p>Manage the Barangay logo and digital signatures used for certificate generation.</p>
   </section>
   <section class="content-section">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -16,7 +16,7 @@
     <div class="settings-grid">
       <article class="settings-card">
         <h2>Barangay logo</h2>
-        <p class="muted">Upload a logo displayed on pilot certificates and staff pages.</p>
+        <p class="muted">Upload a logo displayed on certificates and staff pages.</p>
         {% if settings.barangay_logo_filename %}
           <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.barangay_logo_filename) }}" alt="Current Barangay logo">
           <form method="post">
