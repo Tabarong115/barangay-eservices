@@ -49,6 +49,9 @@ app.config.from_object(Config())
 
 print("[DEBUG] Supabase init status:", get_supabase_debug_status())
 
+if app.config["REQUIRE_SUPABASE"] and not is_supabase_connected():
+    raise RuntimeError("Supabase is required in this environment but could not be initialized.")
+
 UPLOAD_DIRECTORY = Path(app.root_path) / "uploads"
 UPLOAD_DIRECTORY.mkdir(exist_ok=True)
 CERTIFICATE_DIRECTORY = Path(app.root_path) / "pdf" / "generated"
@@ -1137,18 +1140,8 @@ def download_certificate(reference_number):
     if is_supabase_connected():
         clearance_request = get_service_request_by_reference(reference_number)
         if not clearance_request or not clearance_request.get("certificate_filename"):
-            abort(404)
-        certificate_pdf = download_certificate_from_supabase_storage(clearance_request["certificate_filename"])
-        if not certificate_pdf:
-            abort(404)
-        download_name = f"{clearance_request.get('certificate_number') or reference_number}.pdf"
-        return send_file(
-            BytesIO(certificate_pdf),
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=download_name,
-        )
-    else:
+            clearance_request = None
+    if not clearance_request:
         # Fallback to in-memory search
         clearance_request = next((item for item in CLEARANCE_REQUESTS if item["reference_number"] == reference_number), None)
         if not clearance_request:
@@ -1161,10 +1154,33 @@ def download_certificate(reference_number):
             clearance_request = next((item for item in BUSINESS_CLOSURE_REQUESTS if item["reference_number"] == reference_number), None)
         if not clearance_request:
             clearance_request = next((item for item in JOB_SEEKER_REQUESTS if item["reference_number"] == reference_number), None)
+
+    if clearance_request and clearance_request.get("certificate_filename"):
+        stored_filename = clearance_request["certificate_filename"]
+        if is_supabase_connected():
+            certificate_pdf = download_certificate_from_supabase_storage(stored_filename)
+            if certificate_pdf:
+                download_name = f"{clearance_request.get('certificate_number') or reference_number}.pdf"
+                return send_file(
+                    BytesIO(certificate_pdf),
+                    mimetype="application/pdf",
+                    as_attachment=True,
+                    download_name=download_name,
+                )
     
     if not clearance_request or not clearance_request.get("certificate_filename"):
         abort(404)
-    return send_from_directory(CERTIFICATE_DIRECTORY, clearance_request["certificate_filename"], as_attachment=True)
+
+    stored_filename = clearance_request["certificate_filename"]
+    local_filename = Path(stored_filename).name
+    local_path = CERTIFICATE_DIRECTORY / local_filename
+    if local_path.exists():
+        return send_from_directory(CERTIFICATE_DIRECTORY, local_filename, as_attachment=True)
+
+    if (CERTIFICATE_DIRECTORY / stored_filename).exists():
+        return send_from_directory(CERTIFICATE_DIRECTORY, stored_filename, as_attachment=True)
+
+    abort(404)
 
 
 @app.route("/dashboard/login", methods=["GET", "POST"])
@@ -1327,7 +1343,6 @@ def advance_request(reference_number):
                 "Approved - Certificate ready for download": "approved",
             }
         db_next_status = db_status_mapping.get(next_status, next_status)
-        update_service_request_status(reference_number, db_next_status)
         
         # Handle certificate generation for Punong Barangay
         if session["staff_role"] == "Punong Barangay":
@@ -1378,13 +1393,23 @@ def advance_request(reference_number):
                     certificate_data["secretary_signature_path"] = UPLOAD_DIRECTORY / sig_filename  # Use local path
             
             local_certificate_path = CERTIFICATE_DIRECTORY / certificate_filename
-            generator_func(certificate_data, local_certificate_path)
+            try:
+                generator_func(certificate_data, local_certificate_path)
+            except Exception as error:
+                print(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
+                flash("Certificate could not be generated. The request remains awaiting approval; please contact the Barangay Secretary.", "error")
+                return redirect(url_for("dashboard"))
             storage_path = f"{datetime.now():%Y}/{certificate_filename}"
             uploaded_certificate_path = upload_certificate_to_supabase_storage(local_certificate_path, storage_path)
             if not uploaded_certificate_path:
-                raise RuntimeError("Certificate PDF could not be saved to Supabase Storage.")
+                flash("Certificate could not be saved to Supabase Storage. The request remains awaiting approval.", "error")
+                return redirect(url_for("dashboard"))
             if not update_certificate_info(reference_number, certificate_number, uploaded_certificate_path):
-                raise RuntimeError("Certificate details could not be saved to Supabase.")
+                flash("Certificate details could not be saved. The request remains awaiting approval.", "error")
+                return redirect(url_for("dashboard"))
+        if not update_service_request_status(reference_number, db_next_status):
+            flash("Request status could not be saved. Please try again.", "error")
+            return redirect(url_for("dashboard"))
     else:
         # Legacy in-memory update
         clearance_request["status"] = next_status

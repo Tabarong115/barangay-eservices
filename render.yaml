@@ -13,3 +13,5 @@ services:
         generateValue: true
       - key: FLASK_ENV
         value: production
+      - key: REQUIRE_SUPABASE
+        value: true

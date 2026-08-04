@@ -133,24 +133,25 @@ VALUES
   ('selfie-photos', 'selfie-photos', true),
   ('payment-proofs', 'payment-proofs', true),
   ('logos', 'logos', true),
-  ('signatures', 'signatures', true)
+  ('signatures', 'signatures', true),
+  ('certificates', 'certificates', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Allow public access to storage buckets
 DROP POLICY IF EXISTS "public_storage_policy" ON storage.objects;
 CREATE POLICY "public_storage_policy" 
 ON storage.objects FOR SELECT 
-USING (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures'));
+USING (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures', 'certificates'));
 
 DROP POLICY IF EXISTS "public_storage_upload_policy" ON storage.objects;
 CREATE POLICY "public_storage_upload_policy" 
 ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures'));
+WITH CHECK (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures', 'certificates'));
 
 DROP POLICY IF EXISTS "public_storage_update_policy" ON storage.objects;
 CREATE POLICY "public_storage_update_policy" 
 ON storage.objects FOR UPDATE 
-USING (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures'));
+USING (bucket_id IN ('id-photos', 'selfie-photos', 'payment-proofs', 'logos', 'signatures', 'certificates'));
 
 -- ============================================
 -- INITIAL BARANGAY SETTINGS

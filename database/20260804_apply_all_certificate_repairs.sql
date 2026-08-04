@@ -27,6 +27,8 @@ ADD CONSTRAINT valid_status CHECK (status IN (
     'payment_submitted',
     'treasurer_verified',
     'approved',
+    'chairman_approved',
+    'completed',
     'rejected'
 ));
 
@@ -38,6 +40,7 @@ ALTER TABLE service_requests
 ADD COLUMN IF NOT EXISTS certificate_filename VARCHAR(255);
 
 -- 4. Store PDFs in Supabase rather than temporary Render storage.
+-- The bucket ID must match CERTIFICATE_STORAGE_BUCKET in Render (default: certificates).
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('certificates', 'certificates', false)
 ON CONFLICT (id) DO NOTHING;

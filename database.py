@@ -14,7 +14,7 @@ try:
     config = Config()
     if config.supabase_is_configured:
         try:
-            supabase = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+            supabase = create_client(config.SUPABASE_URL, config.supabase_server_key)
         except Exception as exc:
             supabase = None
             print(f"Warning: Supabase client initialization failed: {exc}")
@@ -35,6 +35,7 @@ def get_supabase_debug_status() -> Dict[str, Any]:
         "configured": config.supabase_is_configured,
         "url_present": bool(config.SUPABASE_URL),
         "anon_key_present": bool(config.SUPABASE_ANON_KEY),
+        "service_role_key_present": bool(config.SUPABASE_SERVICE_ROLE_KEY),
         "client_initialized": supabase is not None,
     }
 
@@ -360,7 +361,13 @@ def upload_certificate_to_supabase_storage(local_path: Path, storage_path: str) 
         return None
 
     try:
-        supabase.storage.from_("certificates").upload(
+        # Try to create the bucket if it is missing. Some deployments forget to create it.
+        try:
+            supabase.storage.create_bucket("certificates", public=False)
+        except Exception:
+            pass
+
+        supabase.storage.from_(config.CERTIFICATE_STORAGE_BUCKET).upload(
             path=storage_path,
             file=local_path.read_bytes(),
             file_options={"content-type": "application/pdf", "upsert": "true"},
@@ -377,7 +384,7 @@ def download_certificate_from_supabase_storage(storage_path: str) -> Optional[by
         return None
 
     try:
-        return supabase.storage.from_("certificates").download(storage_path)
+        return supabase.storage.from_(config.CERTIFICATE_STORAGE_BUCKET).download(storage_path)
     except Exception as e:
         print(f"Error downloading certificate PDF: {e}")
         return None

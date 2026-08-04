@@ -75,6 +75,9 @@ FLASK_ENV=development
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=server-only-secret-from-supabase
+CERTIFICATE_STORAGE_BUCKET=certificates
+REQUIRE_SUPABASE=true
 
 PILOT_SECRETARY_USERNAME=secretary
 PILOT_SECRETARY_PASSWORD=secretary-test

@@ -16,6 +16,9 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "development-only-change-me")
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    CERTIFICATE_STORAGE_BUCKET = os.getenv("CERTIFICATE_STORAGE_BUCKET", "certificates")
+    REQUIRE_SUPABASE = os.getenv("REQUIRE_SUPABASE", "false").lower() == "true"
 
     # Local pilot accounts only. Replace these with Supabase Authentication
     # before the portal is used with real citizen records.
@@ -30,5 +33,10 @@ class Config:
 
     @property
     def supabase_is_configured(self):
-        """True only when both public Supabase settings are supplied."""
-        return bool(self.SUPABASE_URL and self.SUPABASE_ANON_KEY)
+        """True when the server has a Supabase URL and a usable server key."""
+        return bool(self.SUPABASE_URL and (self.SUPABASE_SERVICE_ROLE_KEY or self.SUPABASE_ANON_KEY))
+
+    @property
+    def supabase_server_key(self):
+        """Prefer the server-only key; retain anon-key support for local development."""
+        return self.SUPABASE_SERVICE_ROLE_KEY or self.SUPABASE_ANON_KEY

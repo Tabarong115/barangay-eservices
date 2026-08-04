@@ -20,6 +20,8 @@ ADD CONSTRAINT valid_status CHECK (status IN (
     'payment_submitted',
     'treasurer_verified',
     'approved',
+    'chairman_approved',
+    'completed',
     'rejected'
 ));
 
