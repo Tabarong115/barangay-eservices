@@ -30,8 +30,8 @@ The app is now production-ready and fully operational with the following capabil
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
 2. Secretary reviews and forwards the request (can view all requests for citizen assistance)
-3. Applicant uploads GCash payment proof
-4. Treasurer verifies payment and forwards the request
+3. Paid services: applicant uploads GCash payment proof, then the Treasurer verifies it and forwards the request
+4. Free services: the request bypasses GCash and the Treasurer, and goes directly to the Punong Barangay
 5. Punong Barangay approves the request
 6. PDF certificate is generated and stored
 

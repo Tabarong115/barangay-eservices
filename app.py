@@ -106,6 +106,28 @@ def is_service_free(service_type: str) -> bool:
     return service_type in free_services
 
 
+def get_display_status(request_data: dict) -> str:
+    """Translate stored status into the correct citizen and staff workflow status."""
+    status = request_data.get("status", "")
+    is_free = is_service_free(request_data.get("service_type", ""))
+    status_map = {
+        "pending": "Pending Secretary Review",
+        "secretary_reviewed": "Pending Punong Barangay Approval" if is_free else "Awaiting Applicant GCash Payment",
+        "payment_submitted": "Pending Treasurer Payment Verification",
+        "treasurer_verified": "Pending Punong Barangay Approval",
+        "approved": "Approved",
+    }
+    return status_map.get(status, status)
+
+
+def all_local_requests():
+    """Return every in-memory request for local development mode."""
+    return (
+        CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS
+        + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
+    )
+
+
 def dashboard_login_required(view):
     """Keep the local dashboard inaccessible until a pilot staff member signs in."""
     @wraps(view)
@@ -906,6 +928,7 @@ def track_request(reference_number):
     if is_supabase_connected():
         db_request = get_service_request_by_reference(reference_number)
         if db_request:
+            db_request["status"] = get_display_status(db_request)
             return render_template("track_request.html", clearance_request=db_request)
     
     # Fallback to in-memory search
@@ -984,7 +1007,7 @@ def submit_payment(reference_number):
         flash("This is a free service and does not require payment.", "error")
         return redirect(url_for("track_request", reference_number=reference_number))
     
-    if clearance_request["status"] != "Awaiting Applicant GCash Payment":
+    if get_display_status(clearance_request) != "Awaiting Applicant GCash Payment":
         flash("Payment proof cannot be submitted at the current request stage.", "error")
         return redirect(url_for("track_request", reference_number=reference_number))
     if request.method == "POST":
@@ -1002,7 +1025,7 @@ def submit_payment(reference_number):
         # Update database if connected
         if is_supabase_connected():
             update_payment_info(reference_number, payment_reference, payment_proof_filename)
-            update_service_request_status(reference_number, "treasurer_verified")  # Map to DB status
+            update_service_request_status(reference_number, "payment_submitted")
         else:
             # Fallback to in-memory update
             clearance_request["payment_reference"] = payment_reference
@@ -1160,47 +1183,29 @@ def dashboard():
     """Show each local-pilot staff role its assigned step in the clearance workflow."""
     role = session["staff_role"]
     
-    # Use Supabase if connected, otherwise fall back to in-memory
+    # The service fee controls routing. Free services never appear for Treasurer.
     if is_supabase_connected():
-        # Secretary sees ALL requests, other roles see their assigned step
+        all_requests = get_all_service_requests()
         if role == "Secretary":
-            assigned_requests = get_all_service_requests()
-            # Map database status to display status
-            for req in assigned_requests:
-                if req["status"] == "pending":
-                    req["status"] = "Pending Secretary Review"
-                elif req["status"] == "secretary_reviewed":
-                    req["status"] = "Awaiting Applicant GCash Payment"
-                elif req["status"] == "treasurer_verified":
-                    req["status"] = "Pending Punong Barangay Approval"
-                elif req["status"] == "approved":
-                    req["status"] = "Approved"
-        else:
-            status_for_role = {
-                "Treasurer": "secretary_reviewed",
-                "Punong Barangay": "treasurer_verified",
-            }
-            db_status = status_for_role[role]
-            assigned_requests = get_service_requests_by_status(db_status)
-            # Map database status to display status
-            for req in assigned_requests:
-                if req["status"] == "secretary_reviewed":
-                    req["status"] = "Awaiting Applicant GCash Payment"
-                elif req["status"] == "treasurer_verified":
-                    req["status"] = "Pending Punong Barangay Approval"
-    else:
-        # Legacy status mapping for in-memory storage
-        if role == "Secretary":
-            # Secretary sees ALL requests
-            all_requests = CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
             assigned_requests = all_requests
+        elif role == "Treasurer":
+            assigned_requests = [item for item in all_requests if item["status"] == "payment_submitted"]
+        else:  # Punong Barangay
+            assigned_requests = [
+                item for item in all_requests
+                if (is_service_free(item.get("service_type", "")) and item["status"] == "secretary_reviewed")
+                or (not is_service_free(item.get("service_type", "")) and item["status"] == "treasurer_verified")
+            ]
+        for item in assigned_requests:
+            item["status"] = get_display_status(item)
+    else:
+        all_requests = all_local_requests()
+        if role == "Secretary":
+            assigned_requests = all_requests
+        elif role == "Treasurer":
+            assigned_requests = [item for item in all_requests if item["status"] == "Pending Treasurer Payment Verification"]
         else:
-            legacy_status_for_role = {
-                "Treasurer": "Pending Treasurer Payment Verification",
-                "Punong Barangay": "Pending Punong Barangay Approval",
-            }
-            all_requests = CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
-            assigned_requests = [item for item in all_requests if item["status"] == legacy_status_for_role[role]]
+            assigned_requests = [item for item in all_requests if item["status"] == "Pending Punong Barangay Approval"]
     
     return render_template("dashboard.html", requests=assigned_requests, role=role, username=session["staff_username"])
 
@@ -1266,6 +1271,7 @@ def advance_request(reference_number):
             status_mapping = {
                 "pending": "Pending Secretary Review",
                 "secretary_reviewed": "Awaiting Applicant GCash Payment",
+                "payment_submitted": "Pending Treasurer Payment Verification",
                 "treasurer_verified": "Pending Punong Barangay Approval",
                 "approved": "Approved - Certificate ready for download",
             }
@@ -1403,26 +1409,10 @@ def dashboard_reports():
     # Gather all requests
     if is_supabase_connected():
         all_requests = get_all_service_requests()
-        # Map database status to display status
         for req in all_requests:
-            if req["status"] == "pending":
-                req["status"] = "Pending Secretary Review"
-            elif req["status"] == "secretary_reviewed":
-                req["status"] = "Awaiting Applicant GCash Payment"
-            elif req["status"] == "treasurer_verified":
-                req["status"] = "Pending Punong Barangay Approval"
-            elif req["status"] == "approved":
-                req["status"] = "Approved"
+            req["status"] = get_display_status(req)
     else:
-        # In-memory fallback
-        all_requests = (
-            CLEARANCE_REQUESTS + 
-            CERTIFICATION_REQUESTS + 
-            RESIDENCY_REQUESTS + 
-            INDIGENCY_REQUESTS + 
-            BUSINESS_CLOSURE_REQUESTS + 
-            JOB_SEEKER_REQUESTS
-        )
+        all_requests = all_local_requests()
     
     # Calculate statistics by service type
     stats = {}
