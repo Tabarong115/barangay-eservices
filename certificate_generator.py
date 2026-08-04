@@ -102,9 +102,12 @@ def generate_barangay_clearance(request_data, output_path):
     heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER)
     y = PAGE_HEIGHT - 124 * mm
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    purpose = request_data.get("purpose", "any lawful purpose it may serve")
+    template_data = dict(request_data)
+    template_data["purpose"] = purpose
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar. This Barangay Clearance is issued upon the request of "
-            "the above-named person for <b>{purpose}</b>, for any lawful purpose it may serve.").format(**request_data)
+            "the above-named person for <b>{purpose}</b>.").format(**template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     signature_y = 72 * mm
@@ -195,9 +198,12 @@ def generate_barangay_certification(request_data, output_path):
     heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER)
     y = PAGE_HEIGHT - 124 * mm
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    purpose = request_data.get("purpose", "any lawful purpose it may serve")
+    template_data = dict(request_data)
+    template_data["purpose"] = purpose
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar. This Barangay Certification is issued upon the request of "
-            "the above-named person for <b>{purpose}</b>, for any lawful purpose it may serve.").format(**request_data)
+            "the above-named person for <b>{purpose}</b>.").format(**template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     signature_y = 72 * mm
@@ -290,10 +296,12 @@ def generate_certificate_of_residency(request_data, output_path):
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
     
     residency_text = f"{request_data.get('residency_years', '0')} year(s) and {request_data.get('residency_months', '0')} month(s)"
+    purpose = request_data.get("purpose", "any lawful purpose it may serve")
+    template_data = dict(request_data)
+    template_data["purpose"] = purpose
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a bona fide resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar, having resided at the above address for <b>{}</b>. "
-            "This Certificate of Residency is issued upon the request of the above-named person for <b>{purpose}</b>, "
-            "for any lawful purpose it may serve.").format(residency_text, **request_data)
+            "This Certificate of Residency is issued upon the request of the above-named person for <b>{purpose}</b>.").format(residency_text, **template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     signature_y = 72 * mm
@@ -386,12 +394,12 @@ def generate_certificate_of_indigency(request_data, output_path):
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
     
     family_info = f"with a family size of {request_data.get('family_size', '0')} and a monthly household income of ₱{request_data.get('monthly_income', '0')}"
-    purpose = request_data.get("purpose") or "any lawful purpose"
+    purpose = request_data.get("purpose", "any lawful purpose it may serve")
     template_data = dict(request_data)
     template_data["purpose"] = purpose
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar, {family_info}. This Certificate of Indigency is issued upon the request of "
-            "the above-named person for <b>{purpose}</b>, for any lawful purpose it may serve.").format(
+            "the above-named person for <b>{purpose}</b>.").format(
                 family_info=family_info, **template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
@@ -492,12 +500,15 @@ def generate_business_closure_certification(request_data, output_path):
         except:
             pass
     
+    purpose = request_data.get("purpose", "business record purposes")
+    template_data = dict(request_data)
+    template_data["purpose"] = purpose
     text = ("This is to certify that the business known as <b>{business_name}</b>, located at <b>{business_address}</b>, "
             "operated as a <b>{business_type}</b> under the ownership of <b>{owner_name}</b>, "
             "has officially closed its operations effective <b>{closure_date}</b>. "
             "The reason for closure is stated as: <b>{reason}</b>. "
-            "This Business Closure Certification is issued upon the request of the business owner.").format(
-                closure_date=closure_date, **request_data)
+            "This Business Closure Certification is issued upon the request of the business owner for <b>{purpose}</b>.").format(
+                closure_date=closure_date, **template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     signature_y = 72 * mm

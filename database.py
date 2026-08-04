@@ -156,11 +156,11 @@ def _attach_service_details(service_request: Dict[str, Any]) -> Dict[str, Any]:
             print(f"Error loading {details_table}: {exc}")
 
     # Older Indigency/Residency requests did not yet store their stated purpose.
-    # Keep them printable while all new records preserve the real purpose.
+    # Only set default if purpose field doesn't exist at all (for backward compatibility).
+    # Let the certificate generator handle missing/empty purposes.
     if enriched_request.get("service_type") in {"certificate_of_indigency", "certificate_of_residency"}:
-        enriched_request.setdefault("purpose", "any lawful purpose")
-        if not enriched_request["purpose"]:
-            enriched_request["purpose"] = "any lawful purpose"
+        if "purpose" not in enriched_request:
+            enriched_request["purpose"] = "any lawful purpose it may serve"
 
     return enriched_request
 
