@@ -30,6 +30,7 @@ class Config:
     PILOT_CHAIRMAN_PASSWORD = os.getenv("PILOT_CHAIRMAN_PASSWORD", "chairman-test")
     GCASH_ACCOUNT_NAME = os.getenv("GCASH_ACCOUNT_NAME", "Barangay 7 — To be provided")
     GCASH_ACCOUNT_NUMBER = os.getenv("GCASH_ACCOUNT_NUMBER", "To be provided")
+    BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000")  # Base URL for QR code generation
 
     @property
     def supabase_is_configured(self):

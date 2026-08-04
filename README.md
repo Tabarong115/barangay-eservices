@@ -21,11 +21,13 @@ The app is now production-ready and fully operational with the following capabil
   - Search functionality for Secretary to quickly find requests by name, tracking number, or contact
 - Staff dashboard for Secretary, Treasurer, and Punong Barangay workflow
 - Manual payment proof review for the GCash payment flow
-- Certificate generation in PDF format after approval
+- Certificate generation in PDF format after approval with professional design elements
 - Barangay logo and signature management from the Settings page (upload functionality fully functional)
 - Supabase-backed persistence for requests, settings, and uploaded files
 - Local fallback behavior for development and testing when Supabase is unavailable
 - Production-ready templates with professional messaging and consistent styling
+- Enhanced certificate content with proper purpose display and residency duration information
+- QR code verification for certificate authenticity checking
 
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
@@ -37,14 +39,15 @@ The current workflow is:
 
 ## Tech stack
 
-- Flask
-- Jinja2 templates
-- ReportLab for PDF certificate generation
-- Python-dotenv for environment settings
-- Supabase for database and storage
-- Gunicorn for production hosting
-- PIL (Pillow) for image processing
-- UUID for unique file naming
+- Flask - Web framework
+- Jinja2 templates - HTML templating
+- ReportLab - Professional PDF certificate generation with enhanced design elements
+- Python-dotenv - Environment configuration management
+- Supabase - Database and file storage backend
+- Gunicorn - Production WSGI server
+- PIL (Pillow) - Image processing for uploads and certificates
+- UUID - Unique file naming and reference numbers
+- qrcode - QR code generation for certificate verification
 
 ## Local setup
 
@@ -88,17 +91,20 @@ PILOT_CHAIRMAN_PASSWORD=chairman-test
 
 GCASH_ACCOUNT_NAME=Barangay 7
 GCASH_ACCOUNT_NUMBER=09XXXXXXXXX
+BASE_URL=http://127.0.0.1:5000
 ```
 
 ### 4) Prepare Supabase
 
-Run the SQL from [setup_supabase_policies.sql](setup_supabase_policies.sql) in your Supabase SQL Editor. Then run [20260804_apply_all_certificate_repairs.sql](database/20260804_apply_all_certificate_repairs.sql) once. It fixes service-specific certificate data, workflow statuses, and permanent PDF storage.
+Run the SQL from [setup_supabase_policies.sql](setup_supabase_policies.sql) in your Supabase SQL Editor.
 
 This sets up:
 - tables used by the app
 - storage buckets for uploads
 - row-level security policies
 - initial barangay settings row
+
+**Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements.
 
 ### 5) Start the app
 
@@ -131,6 +137,9 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **Fixed file upload functionality:** Logo and signature uploads now work correctly in both local and production environments
 - **Production-ready templates:** All templates updated with professional messaging and consistent styling
 - **Improved user experience:** Better error handling, clearer instructions, and more intuitive interface
+- **Professional certificate design:** Enhanced PDF certificates with tasteful, professional design elements including double borders, watermarks, improved typography, and better signature placement
+- **Fixed certificate content issues:** Corrected purpose field display for Certificate of Indigency and Certificate of Residency, and fixed residency years/months display in Certificate of Residency
+- **Grammar corrections:** Removed redundant "for any lawful purpose it may serve" phrases when users specify actual purposes
 
 ### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
@@ -154,8 +163,40 @@ While the app is production-ready for public use, the following security enhance
 - Secretary can view all requests and search to assist citizens
 - Photo verification for ID and selfie uploads
 - Payment proof review and verification
-- Certificate generation with custom logos and signatures
+- Professional certificate generation with custom logos and signatures
 - Settings management for barangay branding
+
+## Certificate generation
+
+The app generates professional A4-size PDF certificates for all services with enhanced design elements:
+
+### Design features
+- **Professional double-border design** with navy outer border and gold inner accent
+- **Subtle watermark background** for added depth and professionalism
+- **Enhanced typography** with improved font sizes, spacing, and hierarchy
+- **Better logo placement** with larger, better positioned logos or enhanced default seal
+- **Professional footer** with improved signature sections and spacing
+- **Color scheme refinement** using professional grays and navy tones
+
+### Certificate types
+- **Barangay Clearance** - General purpose clearance certificate
+- **Barangay Certification** - General purpose certification
+- **Certificate of Residency** - Proof of residency with years/months of residence
+- **Certificate of Indigency** - Financial indigency certification with family size and income details
+- **Business Closure Certification** - Business closure documentation
+- **First Time Job Seeker Certification** - Job seeker assistance under Republic Act No. 11261
+
+### Certificate content fixes
+- **Purpose field display:** Fixed missing purpose display in Certificate of Indigency and Certificate of Residency
+- **Residency duration:** Fixed years/months display in Certificate of Residency
+- **Grammar corrections:** Removed redundant phrases when users specify actual purposes
+- **Database integration:** Ensured all form fields are properly stored in Supabase and retrieved for certificate generation
+
+### QR code verification
+- **Certificate authenticity:** Each generated certificate includes a unique QR code in the footer
+- **Verification system:** Scanning the QR code redirects to a verification page showing certificate details
+- **Security feature:** Helps prevent counterfeit certificates by providing instant verification
+- **Configuration:** QR code URLs use the BASE_URL environment variable for proper domain configuration
 
 ## Production deployment
 
@@ -179,6 +220,7 @@ Configure these in your hosting provider (Render Dashboard → Environment tab):
 - `PILOT_CHAIRMAN_PASSWORD` - Punong Barangay login password
 - `GCASH_ACCOUNT_NAME` - GCash account name for payments
 - `GCASH_ACCOUNT_NUMBER` - GCash account number for payments
+- `BASE_URL` - Base URL for QR code generation (e.g., https://your-domain.com)
 
 ### Environment configuration architecture
 
@@ -194,6 +236,23 @@ This architecture allows you to:
 
 **Note:** You can safely use different passwords for local development and production. The app will automatically use the appropriate environment's configuration.
 
+## Recent fixes and improvements
+
+### Certificate content fixes (August 2026)
+- **Fixed purpose field display:** Certificate of Indigency and Certificate of Residency now properly display the user-specified purpose instead of showing blank or default text
+- **Fixed residency duration:** Certificate of Residency now correctly shows the number of years and months of residence as entered by the user
+- **Grammar corrections:** Removed redundant "for any lawful purpose it may serve" phrases when users specify actual purposes, making certificates grammatically correct
+- **Database integration:** Ensured all form fields (purpose, residency years/months) are properly passed to database functions and stored in Supabase
+
+### Certificate design enhancements (August 2026)
+- **Professional double-border design** with navy outer border and gold inner accent
+- **Subtle watermark background** for added depth and professionalism  
+- **Enhanced typography** with improved font sizes, spacing, and hierarchy
+- **Better logo placement** with larger, better positioned logos or enhanced default seal
+- **Professional footer** with improved signature sections and spacing
+- **Color scheme refinement** using professional grays and navy tones
+- **Consistent design** across all six certificate types while maintaining official appearance
+
 ## Project structure
 
 ```text
@@ -201,7 +260,7 @@ barangay-eservices/
 ├── app.py                          # Main Flask application
 ├── config.py                       # Environment configuration
 ├── database.py                     # Supabase database operations
-├── certificate_generator.py        # PDF certificate generation
+├── certificate_generator.py        # Professional PDF certificate generation with enhanced design
 ├── requirements.txt                 # Development dependencies
 ├── requirements-prod.txt           # Production dependencies
 ├── Procfile                        # Heroku/Render deployment

@@ -1512,6 +1512,53 @@ def dashboard_reports():
     )
 
 
+@app.route("/verify", methods=["GET"])
+def verify_certificate():
+    """Verify certificate authenticity via QR code scan."""
+    certificate_number = request.args.get("cert")
+    tracking_number = request.args.get("track")
+    
+    if not certificate_number:
+        return render_template("verify_certificate.html", 
+                             valid=False, 
+                             error="Certificate number is required")
+    
+    # Search for the certificate in the database
+    if is_supabase_connected():
+        all_requests = get_all_service_requests()
+    else:
+        all_requests = all_local_requests()
+    
+    # Find the request with matching certificate number
+    certificate_data = None
+    for req in all_requests:
+        if req.get("certificate_number") == certificate_number:
+            certificate_data = req
+            break
+    
+    if not certificate_data:
+        return render_template("verify_certificate.html",
+                             valid=False,
+                             error="Certificate not found in records")
+    
+    # Additional verification with tracking number if provided
+    if tracking_number and certificate_data.get("tracking_number") != tracking_number:
+        return render_template("verify_certificate.html",
+                             valid=False,
+                             error="Tracking number does not match certificate")
+    
+    # Certificate is valid
+    return render_template("verify_certificate.html",
+                         valid=True,
+                         certificate=certificate_data,
+                         service_type=certificate_data.get("service_type", "Unknown"),
+                         certificate_number=certificate_number,
+                         tracking_number=certificate_data.get("tracking_number"),
+                         full_name=certificate_data.get("full_name", "N/A"),
+                         issued_at=certificate_data.get("issued_at"),
+                         status=get_display_status(certificate_data))
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
