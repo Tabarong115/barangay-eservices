@@ -247,7 +247,10 @@ def generate_certificate_of_residency(request_data, output_path):
     y = PAGE_HEIGHT - 138 * mm
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
     
-    residency_text = f"{request_data.get('residency_years', '0')} year(s) and {request_data.get('residency_months', '0')} month(s)"
+    # Support both field naming conventions for compatibility
+    years = request_data.get('years_resided') or request_data.get('residency_years', '0')
+    months = request_data.get('months_resided') or request_data.get('residency_months', '0')
+    residency_text = f"{years} year(s) and {months} month(s)"
     purpose = request_data.get("purpose", "any lawful purpose it may serve")
     template_data = dict(request_data)
     template_data["purpose"] = purpose
