@@ -540,7 +540,8 @@ def certificate_of_residency():
                 id_photo_filename=id_photo_filename,
                 selfie_photo_filename=selfie_photo_filename,
                 years_resided=int(residency_years),
-                months_resided=int(residency_months)
+                months_resided=int(residency_months),
+                purpose=purpose
             )
             
             residency_request = {
@@ -652,7 +653,8 @@ def certificate_of_indigency():
                 id_photo_filename=id_photo_filename,
                 selfie_photo_filename=selfie_photo_filename,
                 family_size=int(family_size),
-                monthly_income=float(monthly_income)
+                monthly_income=float(monthly_income),
+                purpose=purpose
             )
             
             indigency_request = {
