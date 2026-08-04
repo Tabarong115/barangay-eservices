@@ -386,9 +386,13 @@ def generate_certificate_of_indigency(request_data, output_path):
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
     
     family_info = f"with a family size of {request_data.get('family_size', '0')} and a monthly household income of ₱{request_data.get('monthly_income', '0')}"
+    purpose = request_data.get("purpose") or "any lawful purpose"
+    template_data = dict(request_data)
+    template_data["purpose"] = purpose
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar, {family_info}. This Certificate of Indigency is issued upon the request of "
-            "the above-named person for <b>{purpose}</b>, for any lawful purpose it may serve.").format(family_info=family_info, **request_data)
+            "the above-named person for <b>{purpose}</b>, for any lawful purpose it may serve.").format(
+                family_info=family_info, **template_data)
     y = _paragraph(pdf, text, margin, y, content_width, body) - 9 * mm
     _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     signature_y = 72 * mm

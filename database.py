@@ -93,13 +93,15 @@ def create_service_request(
             supabase.table("residency_details").insert({
                 "service_request_id": service_request_id,
                 "years_resided": service_specific_fields.get("years_resided", 0),
-                "months_resided": service_specific_fields.get("months_resided", 0)
+                "months_resided": service_specific_fields.get("months_resided", 0),
+                "purpose": service_specific_fields.get("purpose", "")
             }).execute()
         elif service_type == "certificate_of_indigency":
             supabase.table("indigency_details").insert({
                 "service_request_id": service_request_id,
                 "family_size": service_specific_fields.get("family_size", 0),
-                "monthly_income": service_specific_fields.get("monthly_income", 0)
+                "monthly_income": service_specific_fields.get("monthly_income", 0),
+                "purpose": service_specific_fields.get("purpose", "")
             }).execute()
         elif service_type == "business_closure":
             supabase.table("business_closure_details").insert({
@@ -120,6 +122,47 @@ def create_service_request(
         return None
 
 
+DETAILS_TABLES = {
+    "barangay_clearance": "barangay_clearance_details",
+    "barangay_certification": "barangay_certification_details",
+    "certificate_of_residency": "residency_details",
+    "certificate_of_indigency": "indigency_details",
+    "business_closure": "business_closure_details",
+    "first_time_job_seeker": "job_seeker_details",
+}
+
+
+def _attach_service_details(service_request: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge a request's service-specific record into its common record."""
+    if not service_request or not is_supabase_connected():
+        return service_request
+
+    enriched_request = dict(service_request)
+    details_table = DETAILS_TABLES.get(enriched_request.get("service_type"))
+    if details_table:
+        try:
+            result = (
+                supabase.table(details_table)
+                .select("*")
+                .eq("service_request_id", enriched_request["id"])
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                enriched_request.update(result.data[0])
+        except Exception as exc:
+            print(f"Error loading {details_table}: {exc}")
+
+    # Older Indigency/Residency requests did not yet store their stated purpose.
+    # Keep them printable while all new records preserve the real purpose.
+    if enriched_request.get("service_type") in {"certificate_of_indigency", "certificate_of_residency"}:
+        enriched_request.setdefault("purpose", "any lawful purpose")
+        if not enriched_request["purpose"]:
+            enriched_request["purpose"] = "any lawful purpose"
+
+    return enriched_request
+
+
 def get_service_request_by_reference(reference_number: str) -> Optional[Dict[str, Any]]:
     """Get a service request by its reference number."""
     if not is_supabase_connected():
@@ -128,7 +171,7 @@ def get_service_request_by_reference(reference_number: str) -> Optional[Dict[str
     try:
         result = supabase.table("service_requests").select("*").eq("reference_number", reference_number).execute()
         if result.data:
-            return result.data[0]
+            return _attach_service_details(result.data[0])
         return None
     except Exception as e:
         print(f"Error getting service request: {e}")
@@ -145,7 +188,7 @@ def get_all_service_requests(service_type: Optional[str] = None) -> List[Dict[st
         if service_type:
             query = query.eq("service_type", service_type)
         result = query.execute()
-        return result.data
+        return [_attach_service_details(request) for request in result.data]
     except Exception as e:
         print(f"Error getting service requests: {e}")
         return []
