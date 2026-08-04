@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 from config import Config
 import base64
 from io import BytesIO
+from pathlib import Path
 
 try:
     from supabase import create_client, Client
@@ -225,7 +226,6 @@ def update_payment_info(reference_number: str, payment_reference: str, payment_p
     """Update payment information for a service request."""
     if not is_supabase_connected():
         return False
-    
     try:
         supabase.table("service_requests").update({
             "payment_reference": payment_reference,
@@ -234,6 +234,22 @@ def update_payment_info(reference_number: str, payment_reference: str, payment_p
         return True
     except Exception as e:
         print(f"Error updating payment info: {e}")
+        return False
+
+
+def update_certificate_info(reference_number: str, certificate_number: str, certificate_filename: str) -> bool:
+    """Record the durable Supabase Storage path of a generated certificate."""
+    if not is_supabase_connected():
+        return False
+
+    try:
+        supabase.table("service_requests").update({
+            "certificate_number": certificate_number,
+            "certificate_filename": certificate_filename,
+        }).eq("reference_number", reference_number).execute()
+        return True
+    except Exception as e:
+        print(f"Error saving certificate information: {e}")
         return False
 
 
@@ -322,7 +338,6 @@ def upload_file_to_supabase_storage(file_data: bytes, bucket_name: str, file_pat
     """Upload a file to Supabase Storage and return the public URL."""
     if not is_supabase_connected():
         return None
-    
     try:
         # Upload file to Supabase Storage
         supabase.storage.from_(bucket_name).upload(
@@ -336,6 +351,35 @@ def upload_file_to_supabase_storage(file_data: bytes, bucket_name: str, file_pat
         return public_url
     except Exception as e:
         print(f"Error uploading file to Supabase Storage: {e}")
+        return None
+
+
+def upload_certificate_to_supabase_storage(local_path: Path, storage_path: str) -> Optional[str]:
+    """Upload a generated PDF and return its stable path in the certificates bucket."""
+    if not is_supabase_connected():
+        return None
+
+    try:
+        supabase.storage.from_("certificates").upload(
+            path=storage_path,
+            file=local_path.read_bytes(),
+            file_options={"content-type": "application/pdf", "upsert": "true"},
+        )
+        return storage_path
+    except Exception as e:
+        print(f"Error uploading certificate PDF: {e}")
+        return None
+
+
+def download_certificate_from_supabase_storage(storage_path: str) -> Optional[bytes]:
+    """Read a certificate PDF from private Supabase Storage for Flask to send."""
+    if not is_supabase_connected():
+        return None
+
+    try:
+        return supabase.storage.from_("certificates").download(storage_path)
+    except Exception as e:
+        print(f"Error downloading certificate PDF: {e}")
         return None
 
 

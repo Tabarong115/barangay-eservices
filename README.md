@@ -89,7 +89,7 @@ GCASH_ACCOUNT_NUMBER=09XXXXXXXXX
 
 ### 4) Prepare Supabase
 
-Run the SQL from [setup_supabase_policies.sql](setup_supabase_policies.sql) in your Supabase SQL Editor. Then run [20260804_fix_certificate_details.sql](database/20260804_fix_certificate_details.sql) once to support the current certificate workflow.
+Run the SQL from [setup_supabase_policies.sql](setup_supabase_policies.sql) in your Supabase SQL Editor. Then run [20260804_apply_all_certificate_repairs.sql](database/20260804_apply_all_certificate_repairs.sql) once. It fixes service-specific certificate data, workflow statuses, and permanent PDF storage.
 
 This sets up:
 - tables used by the app

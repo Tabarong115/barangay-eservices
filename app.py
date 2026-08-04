@@ -5,10 +5,11 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 import json
+from io import BytesIO
 
 from functools import wraps
 
-from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, send_file, send_from_directory, session, url_for
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -21,6 +22,7 @@ from database import (
     get_all_service_requests,
     update_service_request_status,
     update_payment_info,
+    update_certificate_info,
     get_barangay_settings,
     update_barangay_settings,
     get_service_requests_by_status,
@@ -28,6 +30,8 @@ from database import (
     upload_base64_image_to_supabase,
     delete_file_from_supabase_storage,
     get_public_url_from_supabase_storage,
+    upload_certificate_to_supabase_storage,
+    download_certificate_from_supabase_storage,
 )
 from certificate_generator import (
     generate_barangay_clearance,
@@ -1132,6 +1136,18 @@ def download_certificate(reference_number):
     # Try Supabase first if connected
     if is_supabase_connected():
         clearance_request = get_service_request_by_reference(reference_number)
+        if not clearance_request or not clearance_request.get("certificate_filename"):
+            abort(404)
+        certificate_pdf = download_certificate_from_supabase_storage(clearance_request["certificate_filename"])
+        if not certificate_pdf:
+            abort(404)
+        download_name = f"{clearance_request.get('certificate_number') or reference_number}.pdf"
+        return send_file(
+            BytesIO(certificate_pdf),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=download_name,
+        )
     else:
         # Fallback to in-memory search
         clearance_request = next((item for item in CLEARANCE_REQUESTS if item["reference_number"] == reference_number), None)
@@ -1361,7 +1377,14 @@ def advance_request(reference_number):
                 else:
                     certificate_data["secretary_signature_path"] = UPLOAD_DIRECTORY / sig_filename  # Use local path
             
-            generator_func(certificate_data, CERTIFICATE_DIRECTORY / certificate_filename)
+            local_certificate_path = CERTIFICATE_DIRECTORY / certificate_filename
+            generator_func(certificate_data, local_certificate_path)
+            storage_path = f"{datetime.now():%Y}/{certificate_filename}"
+            uploaded_certificate_path = upload_certificate_to_supabase_storage(local_certificate_path, storage_path)
+            if not uploaded_certificate_path:
+                raise RuntimeError("Certificate PDF could not be saved to Supabase Storage.")
+            if not update_certificate_info(reference_number, certificate_number, uploaded_certificate_path):
+                raise RuntimeError("Certificate details could not be saved to Supabase.")
     else:
         # Legacy in-memory update
         clearance_request["status"] = next_status
