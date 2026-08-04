@@ -182,7 +182,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if qr_code:
         qr_size = 25 * mm
         qr_x = PAGE_WIDTH - margin - qr_size
-        qr_y = 30 * mm  # Positioned below Punong Barangay signature area
+        qr_y = 32 * mm  # Positioned below Punong Barangay signature area, moved up slightly
         pdf.drawImage(qr_code, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True, mask="auto")
         
         # Add QR code label
