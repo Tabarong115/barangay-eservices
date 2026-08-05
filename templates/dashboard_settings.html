@@ -52,6 +52,12 @@
           <input id="punong_barangay_signature" name="punong_barangay_signature" type="file" accept="image/jpeg,image/png" required>
           <button class="primary-button" type="submit">Upload signature</button>
         </form>
+        <form method="post">
+          <input type="hidden" name="action" value="update_punong_name">
+          <label for="punong_barangay_name">Punong Barangay Name</label>
+          <input id="punong_barangay_name" name="punong_barangay_name" type="text" value="{{ settings.punong_barangay_name or '' }}" placeholder="Enter full name">
+          <button class="primary-button" type="submit">Update Name</button>
+        </form>
       </article>
 
       <article class="settings-card">
@@ -71,6 +77,12 @@
           <label for="secretary_signature">Select signature image</label>
           <input id="secretary_signature" name="secretary_signature" type="file" accept="image/jpeg,image/png" required>
           <button class="primary-button" type="submit">Upload signature</button>
+        </form>
+        <form method="post">
+          <input type="hidden" name="action" value="update_secretary_name">
+          <label for="secretary_name">Secretary Name</label>
+          <input id="secretary_name" name="secretary_name" type="text" value="{{ settings.secretary_name or '' }}" placeholder="Enter full name">
+          <button class="primary-button" type="submit">Update Name</button>
         </form>
       </article>
     </div>

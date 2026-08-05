@@ -1126,6 +1126,18 @@ def dashboard_settings():
                 delete_pilot_file(settings.get("secretary_signature_filename", ""))
                 settings["secretary_signature_filename"] = ""
                 flash("Barangay Secretary signature removed.", "success")
+            elif action == "update_punong_name":
+                punong_name = request.form.get("punong_barangay_name", "").strip()
+                if not punong_name:
+                    raise ValueError("Punong Barangay name cannot be empty.")
+                settings["punong_barangay_name"] = punong_name
+                flash("Punong Barangay name updated successfully.", "success")
+            elif action == "update_secretary_name":
+                secretary_name = request.form.get("secretary_name", "").strip()
+                if not secretary_name:
+                    raise ValueError("Secretary name cannot be empty.")
+                settings["secretary_name"] = secretary_name
+                flash("Secretary name updated successfully.", "success")
             else:
                 flash("Unknown settings action.", "error")
         except ValueError as error:
@@ -1394,6 +1406,10 @@ def advance_request(reference_number):
                 else:
                     certificate_data["secretary_signature_path"] = UPLOAD_DIRECTORY / sig_filename  # Use local path
             
+            # Add official names to certificate data
+            certificate_data["punong_barangay_name"] = settings.get("punong_barangay_name", "")
+            certificate_data["secretary_name"] = settings.get("secretary_name", "")
+            
             local_certificate_path = CERTIFICATE_DIRECTORY / certificate_filename
             try:
                 generator_func(certificate_data, local_certificate_path)
@@ -1440,6 +1456,11 @@ def advance_request(reference_number):
                     certificate_data["secretary_signature_path"] = sig_filename  # Use Supabase URL
                 else:
                     certificate_data["secretary_signature_path"] = UPLOAD_DIRECTORY / sig_filename  # Use local path
+            
+            # Add official names to certificate data
+            certificate_data["punong_barangay_name"] = settings.get("punong_barangay_name", "")
+            certificate_data["secretary_name"] = settings.get("secretary_name", "")
+            
             generator_func(certificate_data, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
     
     flash(f"{reference_number} was forwarded successfully.", "success")

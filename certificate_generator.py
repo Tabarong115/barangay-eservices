@@ -151,23 +151,31 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("punong_barangay_signature_path"):
         image_reader = _load_image(request_data["punong_barangay_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, signature_x, signature_y + 3 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, signature_x, signature_y - 2 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
     pdf.setFillColor(NAVY)
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawCentredString(signature_x + 30 * mm, signature_y - 6 * mm, "PUNONG BARANGAY")
     pdf.setFont("Helvetica", 8)
-    pdf.drawCentredString(signature_x + 30 * mm, signature_y - 11 * mm, "Signature over printed name")
+    punong_name = request_data.get("punong_barangay_name", "")
+    if punong_name:
+        pdf.drawCentredString(signature_x + 30 * mm, signature_y - 11 * mm, f"Signature over printed name: {punong_name}")
+    else:
+        pdf.drawCentredString(signature_x + 30 * mm, signature_y - 11 * mm, "Signature over printed name")
     
     secretary_y = 45 * mm
     pdf.line(margin, secretary_y, margin + 60 * mm, secretary_y)
     if request_data.get("secretary_signature_path"):
         image_reader = _load_image(request_data["secretary_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, margin, secretary_y + 3 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, margin, secretary_y - 2 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawCentredString(margin + 30 * mm, secretary_y - 6 * mm, "BARANGAY SECRETARY")
     pdf.setFont("Helvetica", 8)
-    pdf.drawCentredString(margin + 30 * mm, secretary_y - 11 * mm, "Attested by")
+    secretary_name = request_data.get("secretary_name", "")
+    if secretary_name:
+        pdf.drawCentredString(margin + 30 * mm, secretary_y - 11 * mm, f"Attested by: {secretary_name}")
+    else:
+        pdf.drawCentredString(margin + 30 * mm, secretary_y - 11 * mm, "Attested by")
     
     # Enhanced footer design
     pdf.setStrokeColor(GOLD)
