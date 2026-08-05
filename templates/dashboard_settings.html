@@ -85,6 +85,24 @@
           <button class="primary-button" type="submit">Update Name</button>
         </form>
       </article>
+
+      <article class="settings-card">
+        <h2>Contact Information</h2>
+        <p class="muted">Manage contact details displayed on the Citizens' Charter page.</p>
+        <form method="post">
+          <input type="hidden" name="action" value="update_contact_info">
+          <label for="contact_number">Contact Number</label>
+          <input id="contact_number" name="contact_number" type="text" value="{{ settings.contact_number or '' }}" placeholder="e.g., 09XX-XXX-XXXX">
+          
+          <label for="contact_email">Email Address</label>
+          <input id="contact_email" name="contact_email" type="email" value="{{ settings.contact_email or '' }}" placeholder="e.g., barangay7@example.com">
+          
+          <label for="contact_facebook">Facebook Page</label>
+          <input id="contact_facebook" name="contact_facebook" type="text" value="{{ settings.contact_facebook or '' }}" placeholder="e.g., facebook.com/Barangay7Poblacion">
+          
+          <button class="primary-button" type="submit">Update Contact Information</button>
+        </form>
+      </article>
     </div>
   </section>
 {% endblock %}

@@ -31,7 +31,7 @@
     {% if requests %}
       <section class="request-list" aria-label="{% if role == 'Secretary' %}All requests{% else %}Requests requiring action{% endif %}">
         <h2>{% if role == 'Secretary' %}All requests{% else %}Requests requiring your action{% endif %}</h2>
-        {% for item in requests|reverse %}
+        {% for item in requests %}
           <article class="request-card">
             <div>
               <p class="eyebrow">{{ item.reference_number }}</p>

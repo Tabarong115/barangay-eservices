@@ -255,14 +255,17 @@ def update_certificate_info(reference_number: str, certificate_number: str, cert
 
 
 def get_barangay_settings() -> Dict[str, str]:
-    """Get barangay settings (logo, signature filenames, and official names)."""
+    """Get barangay settings (logo, signature filenames, official names, and contact info)."""
     if not is_supabase_connected():
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
             "secretary_signature_filename": "",
             "punong_barangay_name": "",
-            "secretary_name": ""
+            "secretary_name": "",
+            "contact_number": "",
+            "contact_email": "",
+            "contact_facebook": ""
         }
     
     try:
@@ -273,17 +276,33 @@ def get_barangay_settings() -> Dict[str, str]:
                 "punong_barangay_signature_filename": result.data[0].get("punong_barangay_signature_filename", ""),
                 "secretary_signature_filename": result.data[0].get("secretary_signature_filename", ""),
                 "punong_barangay_name": result.data[0].get("punong_barangay_name", ""),
-                "secretary_name": result.data[0].get("secretary_name", "")
+                "secretary_name": result.data[0].get("secretary_name", ""),
+                "contact_number": result.data[0].get("contact_number", ""),
+                "contact_email": result.data[0].get("contact_email", ""),
+                "contact_facebook": result.data[0].get("contact_facebook", "")
             }
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
             "secretary_signature_filename": "",
             "punong_barangay_name": "",
-            "secretary_name": ""
+            "secretary_name": "",
+            "contact_number": "",
+            "contact_email": "",
+            "contact_facebook": ""
         }
     except Exception as e:
         print(f"Error getting barangay settings: {e}")
+        return {
+            "barangay_logo_filename": "",
+            "punong_barangay_signature_filename": "",
+            "secretary_signature_filename": "",
+            "punong_barangay_name": "",
+            "secretary_name": "",
+            "contact_number": "",
+            "contact_email": "",
+            "contact_facebook": ""
+        }
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
@@ -298,7 +317,10 @@ def update_barangay_settings(
     punong_barangay_signature_filename: str = "",
     secretary_signature_filename: str = "",
     punong_barangay_name: str = "",
-    secretary_name: str = ""
+    secretary_name: str = "",
+    contact_number: str = "",
+    contact_email: str = "",
+    contact_facebook: str = ""
 ) -> bool:
     """Update barangay settings."""
     if not is_supabase_connected():
@@ -315,7 +337,10 @@ def update_barangay_settings(
                 "punong_barangay_signature_filename": punong_barangay_signature_filename,
                 "secretary_signature_filename": secretary_signature_filename,
                 "punong_barangay_name": punong_barangay_name,
-                "secretary_name": secretary_name
+                "secretary_name": secretary_name,
+                "contact_number": contact_number,
+                "contact_email": contact_email,
+                "contact_facebook": contact_facebook
             }).eq("id", row_id).execute()
             return True
         else:
@@ -328,7 +353,10 @@ def update_barangay_settings(
                 "punong_barangay_signature_filename": punong_barangay_signature_filename,
                 "secretary_signature_filename": secretary_signature_filename,
                 "punong_barangay_name": punong_barangay_name,
-                "secretary_name": secretary_name
+                "secretary_name": secretary_name,
+                "contact_number": contact_number,
+                "contact_email": contact_email,
+                "contact_facebook": contact_facebook
             }).execute()
             return True
     except Exception as e:

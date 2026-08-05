@@ -128,11 +128,13 @@ def get_display_status(request_data: dict) -> str:
 
 
 def all_local_requests():
-    """Return every in-memory request for local development mode."""
-    return (
+    """Return every in-memory request for local development mode, sorted by submission date (newest first)."""
+    all_requests = (
         CLEARANCE_REQUESTS + CERTIFICATION_REQUESTS + RESIDENCY_REQUESTS
         + INDIGENCY_REQUESTS + BUSINESS_CLOSURE_REQUESTS + JOB_SEEKER_REQUESTS
     )
+    # Sort by submitted_at in descending order (newest first)
+    return sorted(all_requests, key=lambda x: x.get("submitted_at", datetime.min), reverse=True)
 
 
 def dashboard_login_required(view):
@@ -231,6 +233,9 @@ def load_pilot_settings():
         "barangay_logo_filename": "",
         "punong_barangay_signature_filename": "",
         "secretary_signature_filename": "",
+        "contact_number": "",
+        "contact_email": "",
+        "contact_facebook": "",
     }
     
     # Try Supabase first if connected
@@ -263,7 +268,10 @@ def save_pilot_settings(settings):
             punong_barangay_signature_filename=settings.get("punong_barangay_signature_filename", ""),
             secretary_signature_filename=settings.get("secretary_signature_filename", ""),
             punong_barangay_name=settings.get("punong_barangay_name", ""),
-            secretary_name=settings.get("secretary_name", "")
+            secretary_name=settings.get("secretary_name", ""),
+            contact_number=settings.get("contact_number", ""),
+            contact_email=settings.get("contact_email", ""),
+            contact_facebook=settings.get("contact_facebook", "")
         )
         if not success:
             print("[WARNING] Failed to sync settings to Supabase, but local file saved")
@@ -992,6 +1000,13 @@ def track_request_lookup():
     return render_template("track_lookup.html")
 
 
+@app.get("/citizens-charter")
+def citizens_charter():
+    """Display the Citizens' Charter compliant with ARTA guidelines."""
+    settings = load_pilot_settings()
+    return render_template("citizens_charter.html", settings=settings)
+
+
 @app.route("/requests/<reference_number>/payment", methods=["GET", "POST"])
 def submit_payment(reference_number):
     """Accept manual GCash proof after Secretary review."""
@@ -1140,6 +1155,15 @@ def dashboard_settings():
                     raise ValueError("Secretary name cannot be empty.")
                 settings["secretary_name"] = secretary_name
                 flash("Secretary name updated successfully.", "success")
+            elif action == "update_contact_info":
+                contact_number = request.form.get("contact_number", "").strip()
+                contact_email = request.form.get("contact_email", "").strip()
+                contact_facebook = request.form.get("contact_facebook", "").strip()
+                
+                settings["contact_number"] = contact_number
+                settings["contact_email"] = contact_email
+                settings["contact_facebook"] = contact_facebook
+                flash("Contact information updated successfully.", "success")
             else:
                 flash("Unknown settings action.", "error")
         except ValueError as error:
