@@ -421,17 +421,17 @@ def generate_first_time_job_seeker_certification(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 137 * mm, "(Under Republic Act No. 11261 - First Time Jobseekers Assistance Act)")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=10, leading=18, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 145 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar, and is a first-time job seeker. This certification is issued "
             "in accordance with Republic Act No. 11261 (First Time Jobseekers Assistance Act), which entitles the bearer "
             "to fee waivers for government-issued documents required for employment. The bearer has signed an Oath of Undertaking "
             "declaring that this is their first employment and that the documents obtained will be used for employment purposes only.").format(**request_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
