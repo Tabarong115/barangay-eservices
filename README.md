@@ -23,6 +23,7 @@ The app is now production-ready and fully operational with the following capabil
 - Manual payment proof review for the GCash payment flow
 - Certificate generation in PDF format after approval with professional design elements
 - Barangay logo and signature management from the Settings page (upload functionality fully functional)
+- Official names management for Punong Barangay and Secretary (displayed on certificates as "Signature over printed name")
 - Supabase-backed persistence for requests, settings, and uploaded files
 - Local fallback behavior for development and testing when Supabase is unavailable
 - Production-ready templates with professional messaging and consistent styling
@@ -104,7 +105,7 @@ This sets up:
 - row-level security policies
 - initial barangay settings row
 
-**Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements.
+**Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements. For existing deployments, run `add_official_names_migration.sql` to add official name fields.
 
 ### 5) Start the app
 
@@ -140,6 +141,10 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **Professional certificate design:** Enhanced PDF certificates with tasteful, professional design elements including double borders, watermarks, improved typography, and better signature placement
 - **Fixed certificate content issues:** Corrected purpose field display for Certificate of Indigency and Certificate of Residency, and fixed residency years/months display in Certificate of Residency
 - **Grammar corrections:** Removed redundant "for any lawful purpose it may serve" phrases when users specify actual purposes
+- **Official names feature:** Added Punong Barangay and Secretary name fields in Settings page, displayed on certificates as "Signature over printed name"
+- **Enhanced verification security:** Certificate verification page now includes verification timestamp, record ID, and additional security information
+- **Certificate spacing fixes:** Adjusted First Time Job Seeker certificate spacing to prevent text overlap with signature areas
+- **Signature positioning:** Lowered digital signature positions by 5mm for better visual alignment
 
 ### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
@@ -165,6 +170,7 @@ While the app is production-ready for public use, the following security enhance
 - Payment proof review and verification
 - Professional certificate generation with custom logos and signatures
 - Settings management for barangay branding
+- Official names management for Punong Barangay and Secretary
 
 ## Certificate generation
 
@@ -195,7 +201,7 @@ The app generates professional A4-size PDF certificates for all services with en
 ### QR code verification
 - **Certificate authenticity:** Each generated certificate includes a unique QR code in the footer
 - **Verification system:** Scanning the QR code redirects to a verification page showing certificate details
-- **Security feature:** Helps prevent counterfeit certificates by providing instant verification
+- **Security features:** Enhanced verification page includes timestamp, record ID, and additional security information to prevent forgery
 - **Configuration:** QR code URLs use the BASE_URL environment variable for proper domain configuration
 
 ## Production deployment
@@ -268,7 +274,8 @@ barangay-eservices/
 ├── .env                            # Environment variables (not in git)
 ├── .env.example                    # Environment variables template
 ├── setup_supabase_policies.sql     # Supabase database setup
-├── pilot_settings.json             # Local settings (logo/signature paths)
+├── add_official_names_migration.sql # SQL migration for official names feature
+├── pilot_settings.json             # Local settings (logo/signature paths/names)
 ├── templates/                      # Jinja2 HTML templates
 │   ├── base.html                   # Base template
 │   ├── index.html                  # Public portal
@@ -297,7 +304,16 @@ barangay-eservices/
 
 ## Recent updates
 
-### Version 1.1 (Current - August 2026)
+### Version 1.2 (Current - August 2026)
+- Added official names feature for Punong Barangay and Secretary in Settings page
+- Enhanced certificate verification page with security information (timestamp, record ID)
+- Fixed First Time Job Seeker certificate spacing to prevent text overlap
+- Lowered digital signature positions by 5mm for better alignment
+- Added SQL migration support for database schema updates
+- Updated database functions to handle official name fields
+- Enhanced certificate footer with "Signature over printed name" display
+
+### Version 1.1 (August 2026)
 - Enhanced tracking system with forced tracking number retention
 - Added downloadable voucher functionality for citizens
 - Secretary dashboard now shows all requests with search capability
