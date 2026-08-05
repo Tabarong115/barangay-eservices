@@ -1,6 +1,7 @@
 """Entry point for the Barangay e-Services Portal."""
 
 import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
@@ -238,30 +239,26 @@ def load_pilot_settings():
         "contact_facebook": "",
     }
     
-    # Try Supabase first if connected
+    # Try Supabase first if connected (primary storage for production)
     if is_supabase_connected():
         supabase_settings = get_barangay_settings()
-        # If Supabase has data, return it
-        if any(supabase_settings.values()):
-            return supabase_settings
-        # If Supabase returns empty but local file exists, use local file as fallback
+        # If Supabase has any data, return it (even if some fields are empty)
+        if supabase_settings and any(supabase_settings.values()):
+            return {**defaults, **supabase_settings}
     
-    # Fall back to local file
+    # Fallback to local file only for development/offline mode
     if SETTINGS_FILE.exists():
         try:
             return {**defaults, **json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))}
         except (json.JSONDecodeError, OSError):
-            return defaults
+            print("[WARNING] Failed to load local settings file, using defaults")
     
     return defaults
 
 
 def save_pilot_settings(settings):
     """Save pilot settings for logo and signature assets."""
-    # Always save to local file as primary store and fallback
-    SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
-    
-    # Also try to sync to Supabase if connected
+    # Try to sync to Supabase if connected (primary storage for production)
     if is_supabase_connected():
         success = update_barangay_settings(
             barangay_logo_filename=settings.get("barangay_logo_filename", ""),
@@ -274,7 +271,16 @@ def save_pilot_settings(settings):
             contact_facebook=settings.get("contact_facebook", "")
         )
         if not success:
-            print("[WARNING] Failed to sync settings to Supabase, but local file saved")
+            print("[WARNING] Failed to sync settings to Supabase")
+        else:
+            # Successfully saved to Supabase, no need for local file
+            return
+    
+    # Fallback to local file only for development/offline mode
+    try:
+        SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    except Exception as e:
+        print(f"[WARNING] Failed to save settings to local file: {e}")
 
 
 @app.get("/")
@@ -1436,15 +1442,32 @@ def advance_request(reference_number):
             certificate_data["punong_barangay_name"] = settings.get("punong_barangay_name", "")
             certificate_data["secretary_name"] = settings.get("secretary_name", "")
             
-            local_certificate_path = CERTIFICATE_DIRECTORY / certificate_filename
+            # Use a temporary directory for certificate generation (better for Render)
+            import tempfile
+            temp_dir = Path(tempfile.mkdtemp())
+            temp_certificate_path = temp_dir / certificate_filename
+            
             try:
-                generator_func(certificate_data, local_certificate_path)
+                generator_func(certificate_data, temp_certificate_path)
             except Exception as error:
                 print(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
                 flash("Certificate could not be generated. The request remains awaiting approval; please contact the Barangay Secretary.", "error")
+                # Clean up temp directory
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
                 return redirect(url_for("dashboard"))
+            
             storage_path = f"{datetime.now():%Y}/{certificate_filename}"
-            uploaded_certificate_path = upload_certificate_to_supabase_storage(local_certificate_path, storage_path)
+            uploaded_certificate_path = upload_certificate_to_supabase_storage(temp_certificate_path, storage_path)
+            
+            # Clean up temporary directory after upload attempt
+            try:
+                shutil.rmtree(temp_dir)
+            except Exception as cleanup_error:
+                print(f"[WARNING] Failed to clean up temporary directory: {cleanup_error}")
+            
             if not uploaded_certificate_path:
                 flash("Certificate could not be saved to Supabase Storage. The request remains awaiting approval.", "error")
                 return redirect(url_for("dashboard"))
@@ -1487,7 +1510,24 @@ def advance_request(reference_number):
             certificate_data["punong_barangay_name"] = settings.get("punong_barangay_name", "")
             certificate_data["secretary_name"] = settings.get("secretary_name", "")
             
-            generator_func(certificate_data, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
+            # Use temp directory for local certificate generation too
+            import tempfile
+            temp_dir = Path(tempfile.mkdtemp())
+            temp_certificate_path = temp_dir / clearance_request["certificate_filename"]
+            
+            try:
+                generator_func(certificate_data, temp_certificate_path)
+                # Copy to regular directory for local development
+                CERTIFICATE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(temp_certificate_path, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
+            except Exception as error:
+                print(f"[ERROR] Local certificate generation failed: {error}")
+            finally:
+                # Clean up temp directory
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
     
     flash(f"{reference_number} was forwarded successfully.", "success")
     return redirect(url_for("dashboard"))
