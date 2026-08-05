@@ -261,7 +261,9 @@ def save_pilot_settings(settings):
         success = update_barangay_settings(
             barangay_logo_filename=settings.get("barangay_logo_filename", ""),
             punong_barangay_signature_filename=settings.get("punong_barangay_signature_filename", ""),
-            secretary_signature_filename=settings.get("secretary_signature_filename", "")
+            secretary_signature_filename=settings.get("secretary_signature_filename", ""),
+            punong_barangay_name=settings.get("punong_barangay_name", ""),
+            secretary_name=settings.get("secretary_name", "")
         )
         if not success:
             print("[WARNING] Failed to sync settings to Supabase, but local file saved")

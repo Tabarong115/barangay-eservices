@@ -255,12 +255,14 @@ def update_certificate_info(reference_number: str, certificate_number: str, cert
 
 
 def get_barangay_settings() -> Dict[str, str]:
-    """Get barangay settings (logo and signature filenames)."""
+    """Get barangay settings (logo, signature filenames, and official names)."""
     if not is_supabase_connected():
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
-            "secretary_signature_filename": ""
+            "secretary_signature_filename": "",
+            "punong_barangay_name": "",
+            "secretary_name": ""
         }
     
     try:
@@ -269,26 +271,34 @@ def get_barangay_settings() -> Dict[str, str]:
             return {
                 "barangay_logo_filename": result.data[0].get("barangay_logo_filename", ""),
                 "punong_barangay_signature_filename": result.data[0].get("punong_barangay_signature_filename", ""),
-                "secretary_signature_filename": result.data[0].get("secretary_signature_filename", "")
+                "secretary_signature_filename": result.data[0].get("secretary_signature_filename", ""),
+                "punong_barangay_name": result.data[0].get("punong_barangay_name", ""),
+                "secretary_name": result.data[0].get("secretary_name", "")
             }
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
-            "secretary_signature_filename": ""
+            "secretary_signature_filename": "",
+            "punong_barangay_name": "",
+            "secretary_name": ""
         }
     except Exception as e:
         print(f"Error getting barangay settings: {e}")
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
-            "secretary_signature_filename": ""
+            "secretary_signature_filename": "",
+            "punong_barangay_name": "",
+            "secretary_name": ""
         }
 
 
 def update_barangay_settings(
     barangay_logo_filename: str = "",
     punong_barangay_signature_filename: str = "",
-    secretary_signature_filename: str = ""
+    secretary_signature_filename: str = "",
+    punong_barangay_name: str = "",
+    secretary_name: str = ""
 ) -> bool:
     """Update barangay settings."""
     if not is_supabase_connected():
@@ -303,7 +313,9 @@ def update_barangay_settings(
             supabase.table("barangay_settings").update({
                 "barangay_logo_filename": barangay_logo_filename,
                 "punong_barangay_signature_filename": punong_barangay_signature_filename,
-                "secretary_signature_filename": secretary_signature_filename
+                "secretary_signature_filename": secretary_signature_filename,
+                "punong_barangay_name": punong_barangay_name,
+                "secretary_name": secretary_name
             }).eq("id", row_id).execute()
             return True
         else:
@@ -314,7 +326,9 @@ def update_barangay_settings(
                 "id": settings_id,
                 "barangay_logo_filename": barangay_logo_filename,
                 "punong_barangay_signature_filename": punong_barangay_signature_filename,
-                "secretary_signature_filename": secretary_signature_filename
+                "secretary_signature_filename": secretary_signature_filename,
+                "punong_barangay_name": punong_barangay_name,
+                "secretary_name": secretary_name
             }).execute()
             return True
     except Exception as e:
