@@ -234,6 +234,11 @@ def load_pilot_settings():
         "barangay_logo_filename": "",
         "punong_barangay_signature_filename": "",
         "secretary_signature_filename": "",
+        "treasurer_signature_filename": "",
+        "gcash_qr_filename": "",
+        "punong_barangay_name": "",
+        "secretary_name": "",
+        "treasurer_name": "",
         "contact_number": "",
         "contact_email": "",
         "contact_facebook": "",
@@ -264,8 +269,11 @@ def save_pilot_settings(settings):
             barangay_logo_filename=settings.get("barangay_logo_filename", ""),
             punong_barangay_signature_filename=settings.get("punong_barangay_signature_filename", ""),
             secretary_signature_filename=settings.get("secretary_signature_filename", ""),
+            treasurer_signature_filename=settings.get("treasurer_signature_filename", ""),
+            gcash_qr_filename=settings.get("gcash_qr_filename", ""),
             punong_barangay_name=settings.get("punong_barangay_name", ""),
             secretary_name=settings.get("secretary_name", ""),
+            treasurer_name=settings.get("treasurer_name", ""),
             contact_number=settings.get("contact_number", ""),
             contact_email=settings.get("contact_email", ""),
             contact_facebook=settings.get("contact_facebook", "")
@@ -1047,12 +1055,14 @@ def submit_payment(reference_number):
         payment_proof = request.files.get("payment_proof")
         if not payment_reference or not payment_proof or not payment_proof.filename:
             flash("Enter the GCash payment reference and upload the payment screenshot.", "error")
-            return render_template("payment_form.html", clearance_request=clearance_request)
+            settings = load_pilot_settings()
+            return render_template("payment_form.html", clearance_request=clearance_request, settings=settings)
         try:
             payment_proof_filename = save_pilot_image(payment_proof, "payment", "payment-proofs" if is_supabase_connected() else None)
         except ValueError as error:
             flash(str(error), "error")
-            return render_template("payment_form.html", clearance_request=clearance_request)
+            settings = load_pilot_settings()
+            return render_template("payment_form.html", clearance_request=clearance_request, settings=settings)
         
         # Update database if connected
         if is_supabase_connected():
@@ -1065,7 +1075,9 @@ def submit_payment(reference_number):
             clearance_request["status"] = "Pending Treasurer Payment Verification"
         
         return redirect(url_for("track_request", reference_number=reference_number))
-    return render_template("payment_form.html", clearance_request=clearance_request)
+    
+    settings = load_pilot_settings()
+    return render_template("payment_form.html", clearance_request=clearance_request, settings=settings)
 
 
 @app.get("/pilot-id-photos/<path:filename>")
@@ -1170,6 +1182,36 @@ def dashboard_settings():
                 settings["contact_email"] = contact_email
                 settings["contact_facebook"] = contact_facebook
                 flash("Contact information updated successfully.", "success")
+            elif action == "upload_treasurer_signature":
+                signature = request.files.get("treasurer_signature")
+                if not signature or not signature.filename:
+                    raise ValueError("Select the Treasurer signature image to upload.")
+                filename = save_pilot_image(signature, "signature_treasurer", "signatures" if is_supabase_connected() else None)
+                delete_pilot_file(settings.get("treasurer_signature_filename", ""))
+                settings["treasurer_signature_filename"] = filename
+                flash("Treasurer signature uploaded successfully.", "success")
+            elif action == "delete_treasurer_signature":
+                delete_pilot_file(settings.get("treasurer_signature_filename", ""))
+                settings["treasurer_signature_filename"] = ""
+                flash("Treasurer signature removed.", "success")
+            elif action == "update_treasurer_name":
+                treasurer_name = request.form.get("treasurer_name", "").strip()
+                if not treasurer_name:
+                    raise ValueError("Treasurer name cannot be empty.")
+                settings["treasurer_name"] = treasurer_name
+                flash("Treasurer name updated successfully.", "success")
+            elif action == "upload_gcash_qr":
+                gcash_qr = request.files.get("gcash_qr")
+                if not gcash_qr or not gcash_qr.filename:
+                    raise ValueError("Select the GCash QR code image to upload.")
+                filename = save_pilot_image(gcash_qr, "gcash_qr", "qrcodes" if is_supabase_connected() else None)
+                delete_pilot_file(settings.get("gcash_qr_filename", ""))
+                settings["gcash_qr_filename"] = filename
+                flash("GCash QR code uploaded successfully.", "success")
+            elif action == "delete_gcash_qr":
+                delete_pilot_file(settings.get("gcash_qr_filename", ""))
+                settings["gcash_qr_filename"] = ""
+                flash("GCash QR code removed.", "success")
             else:
                 flash("Unknown settings action.", "error")
         except ValueError as error:

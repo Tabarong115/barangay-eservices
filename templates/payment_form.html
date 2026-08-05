@@ -4,7 +4,14 @@
   <section class="form-hero"><p class="eyebrow">Service Payment</p><h1>GCash payment</h1><p>Pay using the official Barangay GCash account, then submit your payment reference and screenshot for Treasurer verification.</p></section>
   <section class="content-section narrow">
     <div class="payment-details">
-      <div class="qr-placeholder"><span>GCash</span><strong>Official QR</strong><small>Scan to pay</small></div>
+      {% if settings.gcash_qr_filename %}
+        <div class="qr-image">
+          <img src="{{ url_for('pilot_id_photo', filename=settings.gcash_qr_filename) }}" alt="GCash QR Code">
+          <small>Scan to pay via GCash</small>
+        </div>
+      {% else %}
+        <div class="qr-placeholder"><span>GCash</span><strong>Official QR</strong><small>Scan to pay</small></div>
+      {% endif %}
       <div><p class="eyebrow">Payment details</p><h2>Pay the required fee</h2><p><strong>Account name:</strong> {{ config.GCASH_ACCOUNT_NAME }}</p><p><strong>GCash number:</strong> {{ config.GCASH_ACCOUNT_NUMBER }}</p><p class="field-help">Only pay when the Secretary has reviewed your request. Use the exact amount shown for your service.</p></div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}

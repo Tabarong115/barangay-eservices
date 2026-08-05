@@ -87,6 +87,55 @@
       </article>
 
       <article class="settings-card">
+        <h2>Treasurer Information</h2>
+        <p class="muted">Manage the Barangay Treasurer signature and GCash QR code for payments.</p>
+        
+        <!-- Treasurer Signature -->
+        <h3>Treasurer Signature</h3>
+        {% if settings.treasurer_signature_filename %}
+          <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.treasurer_signature_filename) }}" alt="Treasurer signature">
+          <form method="post">
+            <input type="hidden" name="action" value="delete_treasurer_signature">
+            <button class="secondary-button" type="submit">Remove signature</button>
+          </form>
+        {% else %}
+          <p class="muted">No Treasurer signature has been uploaded yet.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_treasurer_signature">
+          <label for="treasurer_signature">Select signature image</label>
+          <input id="treasurer_signature" name="treasurer_signature" type="file" accept="image/jpeg,image/png" required>
+          <button class="primary-button" type="submit">Upload signature</button>
+        </form>
+        
+        <!-- Treasurer Name -->
+        <form method="post">
+          <input type="hidden" name="action" value="update_treasurer_name">
+          <label for="treasurer_name">Treasurer Name</label>
+          <input id="treasurer_name" name="treasurer_name" type="text" value="{{ settings.treasurer_name or '' }}" placeholder="Enter full name">
+          <button class="primary-button" type="submit">Update Name</button>
+        </form>
+        
+        <!-- GCash QR Code -->
+        <h3>GCash QR Code</h3>
+        {% if settings.gcash_qr_filename %}
+          <img class="settings-preview" src="{{ url_for('pilot_id_photo', filename=settings.gcash_qr_filename) }}" alt="GCash QR Code">
+          <form method="post">
+            <input type="hidden" name="action" value="delete_gcash_qr">
+            <button class="secondary-button" type="submit">Remove QR code</button>
+          </form>
+        {% else %}
+          <p class="muted">No GCash QR code has been uploaded yet.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="action" value="upload_gcash_qr">
+          <label for="gcash_qr">Select GCash QR code image</label>
+          <input id="gcash_qr" name="gcash_qr" type="file" accept="image/jpeg,image/png" required>
+          <button class="primary-button" type="submit">Upload QR code</button>
+        </form>
+      </article>
+
+      <article class="settings-card">
         <h2>Contact Information</h2>
         <p class="muted">Manage contact details displayed on the Citizens' Charter page.</p>
         <form method="post">
