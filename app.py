@@ -1548,6 +1548,8 @@ def verify_certificate():
                              error="Tracking number does not match certificate")
     
     # Certificate is valid
+    from datetime import datetime
+    verification_timestamp = datetime.now()
     return render_template("verify_certificate.html",
                          valid=True,
                          certificate=certificate_data,
@@ -1556,6 +1558,9 @@ def verify_certificate():
                          tracking_number=certificate_data.get("tracking_number"),
                          full_name=certificate_data.get("full_name", "N/A"),
                          issued_at=certificate_data.get("issued_at"),
+                         purpose=certificate_data.get("purpose", "N/A"),
+                         address=certificate_data.get("address", "N/A"),
+                         verification_timestamp=verification_timestamp,
                          status=get_display_status(certificate_data))
 
 

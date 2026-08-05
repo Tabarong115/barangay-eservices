@@ -14,15 +14,23 @@
         {% endif %}
         <p><strong>Service Type:</strong> {{ service_type|replace('_', ' ')|title }}</p>
         <p><strong>Issued To:</strong> {{ full_name }}</p>
+        <p><strong>Address:</strong> {{ address }}</p>
         {% if issued_at %}
         <p><strong>Issue Date:</strong> {{ issued_at.strftime('%B %d, %Y') if issued_at.strftime else 'N/A' }}</p>
         {% endif %}
+        <p><strong>Purpose:</strong> {{ purpose }}</p>
         <p><strong>Current Status:</strong> {{ status }}</p>
       </div>
       
       <div class="info-box" style="background-color: #F3F4F6; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
         <p style="margin: 0; font-size: 0.9rem; color: #4B5563;">
           <strong>ℹ️ Verification Details:</strong> This certificate has been verified as authentic and issued by Barangay 7, Poblacion, Salcedo, Eastern Samar through the official e-Services Portal.
+        </p>
+      </div>
+      
+      <div class="info-box" style="background-color: #EFF6FF; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid #BFDBFE;">
+        <p style="margin: 0; font-size: 0.85rem; color: #1E40AF;">
+          <strong>🔒 Security Information:</strong> This verification was performed on {{ verification_timestamp.strftime('%B %d, %Y at %I:%M %p') }}. Record ID: {{ certificate_number[:8] }}-{{ tracking_number[:8] if tracking_number else 'N/A' }}. For official use only.
         </p>
       </div>
       
