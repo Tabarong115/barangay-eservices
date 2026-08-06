@@ -42,6 +42,7 @@ from certificate_generator import (
     generate_business_closure_certification,
     generate_first_time_job_seeker_certification,
 )
+from facebook_notifier import facebook_notifier
 
 load_dotenv()
 
@@ -401,6 +402,11 @@ def barangay_clearance():
             CLEARANCE_REQUESTS.append(clearance_request)
             print(f"[DEBUG] Added to in-memory storage. Total requests: {len(CLEARANCE_REQUESTS)}")
         
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            clearance_request["service_type"] = "barangay_clearance"
+            facebook_notifier.notify_new_request(clearance_request)
+        
         return render_template("request_received.html", clearance_request=clearance_request)
 
     return render_template("barangay_clearance_form.html", form_data={})
@@ -505,6 +511,12 @@ def barangay_certification():
                 "status": "Pending Secretary Review",
             }
             CERTIFICATION_REQUESTS.append(certification_request)
+        
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            certification_request["service_type"] = "barangay_certification"
+            facebook_notifier.notify_new_request(certification_request)
+        
         return render_template("request_received.html", clearance_request=certification_request)
 
     return render_template("barangay_certification_form.html", form_data={})
@@ -617,6 +629,11 @@ def certificate_of_residency():
                 "status": "Pending Secretary Review",
             }
             RESIDENCY_REQUESTS.append(residency_request)
+        
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            residency_request["service_type"] = "certificate_of_residency"
+            facebook_notifier.notify_new_request(residency_request)
         
         return render_template("request_received.html", clearance_request=residency_request)
 
@@ -731,6 +748,11 @@ def certificate_of_indigency():
             }
             INDIGENCY_REQUESTS.append(indigency_request)
         
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            indigency_request["service_type"] = "certificate_of_indigency"
+            facebook_notifier.notify_new_request(indigency_request)
+        
         return render_template("request_received.html", clearance_request=indigency_request)
 
     return render_template("certificate_of_indigency_form.html", form_data={})
@@ -844,6 +866,12 @@ def business_closure():
             }
             BUSINESS_CLOSURE_REQUESTS.append(business_closure_request)
         
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            business_closure_request["service_type"] = "business_closure"
+            business_closure_request["full_name"] = owner_name  # Add for notification
+            facebook_notifier.notify_new_request(business_closure_request)
+        
         return render_template("request_received.html", clearance_request=business_closure_request)
 
     return render_template("business_closure_form.html", form_data={})
@@ -948,6 +976,11 @@ def first_time_job_seeker():
                 "status": "Pending Secretary Review",
             }
             JOB_SEEKER_REQUESTS.append(job_seeker_request)
+        
+        # Send Facebook notification to staff about new request
+        if facebook_notifier.is_configured():
+            job_seeker_request["service_type"] = "first_time_job_seeker"
+            facebook_notifier.notify_new_request(job_seeker_request)
         
         return render_template("request_received.html", clearance_request=job_seeker_request)
 
@@ -1073,6 +1106,10 @@ def submit_payment(reference_number):
             clearance_request["payment_reference"] = payment_reference
             clearance_request["payment_proof_filename"] = payment_proof_filename
             clearance_request["status"] = "Pending Treasurer Payment Verification"
+        
+        # Send Facebook notification about payment submission
+        if facebook_notifier.is_configured():
+            facebook_notifier.notify_payment_submitted(clearance_request)
         
         return redirect(url_for("track_request", reference_number=reference_number))
     
@@ -1519,9 +1556,14 @@ def advance_request(reference_number):
         if not update_service_request_status(reference_number, db_next_status):
             flash("Request status could not be saved. Please try again.", "error")
             return redirect(url_for("dashboard"))
+        
+        # Determine the actual next status for notification
+        actual_next_status = db_next_status
     else:
         # Legacy in-memory update
         clearance_request["status"] = next_status
+        actual_next_status = next_status
+        
         if session["staff_role"] == "Punong Barangay":
             clearance_request["certificate_number"] = f"B7-{datetime.now():%Y}-{len(request_list):04d}"
             clearance_request["issued_at"] = datetime.now()
@@ -1570,6 +1612,15 @@ def advance_request(reference_number):
                     shutil.rmtree(temp_dir)
                 except:
                     pass
+    
+    # Send Facebook notification about status change (unified for both cases)
+    if facebook_notifier.is_configured():
+        clearance_request["service_type"] = clearance_request.get("service_type", "unknown")
+        facebook_notifier.notify_status_change(clearance_request, current_status, actual_next_status)
+        
+        # Special notification for approval
+        if actual_next_status == "approved" or actual_next_status == "Approved":
+            facebook_notifier.notify_approval(clearance_request)
     
     flash(f"{reference_number} was forwarded successfully.", "success")
     return redirect(url_for("dashboard"))

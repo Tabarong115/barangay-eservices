@@ -153,6 +153,8 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **Production-ready templates:** All templates updated with professional messaging and consistent styling
 - **Improved user experience:** Better error handling, clearer instructions, and more intuitive interface
 - **Professional certificate design:** Enhanced PDF certificates with tasteful, professional design elements including double borders, watermarks, improved typography, and better signature placement
+- **Optimized certificate layout:** Improved header spacing, body content positioning, signature alignment, and QR code placement for more authentic and professional appearance
+- **Authentic signature overlap:** Digital signatures now overlap printed names for realistic in-person signature appearance on certificates
 - **Fixed certificate content issues:** Corrected purpose field display for Certificate of Indigency and Certificate of Residency, and fixed residency years/months display in Certificate of Residency
 - **Grammar corrections:** Removed redundant "for any lawful purpose it may serve" phrases when users specify actual purposes
 - **Official names feature:** Added Punong Barangay, Secretary, and Treasurer name fields in Settings page
@@ -166,6 +168,7 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **GCash QR code integration:** Added GCash QR code upload feature for payment processing, displayed in payment form
 - **Production storage optimization:** Implemented Supabase-first storage with temporary file cleanup for Render deployment
 - **Navigation improvements:** Simplified navigation text and added Citizens' Charter access
+- **Mobile responsiveness fixes:** Fixed dashboard settings page and all grid layouts to properly stack on mobile devices
 
 ### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
@@ -244,8 +247,9 @@ The app generates professional A4-size PDF certificates for all services with en
 
 ### Signature format
 Certificates now follow professional signature formatting:
-- **Punong Barangay:** "Approved by" → Signature → Printed Name → Line → "Punong Barangay"
-- **Secretary:** "Attested by" → Signature → Printed Name → Line → "Barangay Secretary"
+- **Punong Barangay:** "Approved by" → Signature (overlapping printed name) → Printed Name → Line → "Punong Barangay"
+- **Secretary:** "Attested by" → Signature (overlapping printed name) → Printed Name → Line → "Barangay Secretary"
+- **Authentic signature overlap:** Digital signatures are positioned to overlap printed names for realistic in-person signature appearance
 - Proper font hierarchy with printed names most prominent
 - Consistent positioning and spacing for professional appearance
 
@@ -338,6 +342,14 @@ This architecture allows you to:
 - **Professional footer** with improved signature sections and spacing
 - **Color scheme refinement** using professional grays and navy tones
 - **Consistent design** across all six certificate types while maintaining official appearance
+- **Optimized layout:** Improved header spacing, body content positioning, signature alignment, and QR code placement
+- **Authentic signature overlap:** Digital signatures positioned to overlap printed names for realistic appearance
+
+### Responsive design improvements (August 2026)
+- **Mobile grid fixes:** Dashboard settings page now properly stacks cards on mobile devices
+- **Comprehensive responsive layout:** All grid layouts (service-grid, dashboard-grid, settings-grid, mvms-grid) now respond correctly to screen sizes
+- **Mobile-first approach:** Cards and content sections stack properly on smartphones and tablets
+- **Consistent behavior:** All pages follow the same responsive patterns as the Public Portal
 
 ## Project structure
 
@@ -384,7 +396,16 @@ barangay-eservices/
 
 ## Recent updates
 
-### Version 1.2 (Current - August 2026)
+### Version 1.3 (Current - August 2026)
+- Optimized certificate layout with improved header spacing, body content positioning, and signature alignment
+- Implemented authentic signature overlap effect for realistic in-person signature appearance
+- Enhanced QR code positioning and label placement in certificate footer
+- Fixed responsive design issues in dashboard settings page and all grid layouts
+- Ensured all pages properly stack cards on mobile devices for better mobile user experience
+- Cleaned up duplicate code in certificate generation functions
+- Fixed Business Closure Certification formatting issue with closure_date parameter
+
+### Version 1.2 (August 2026)
 - Added official names feature for Punong Barangay and Secretary in Settings page
 - Enhanced certificate verification page with security information (timestamp, record ID)
 - Fixed First Time Job Seeker certificate spacing to prevent text overlap

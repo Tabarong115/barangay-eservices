@@ -158,7 +158,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("punong_barangay_signature_path"):
         image_reader = _load_image(request_data["punong_barangay_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, pb_x + 2.5 * mm, pb_y - 25 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, pb_x + 2.5 * mm, pb_y - 23 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 10)
