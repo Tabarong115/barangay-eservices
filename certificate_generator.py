@@ -190,7 +190,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("secretary_signature_path"):
         image_reader = _load_image(request_data["secretary_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, sec_x + 2.5 * mm, sec_y - 19 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, sec_x + 2.5 * mm, sec_y - 20 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 10)
@@ -203,11 +203,11 @@ def _add_enhanced_footer(pdf, request_data, margin):
     # 4. Short Line
     pdf.setStrokeColor(NAVY)
     pdf.setLineWidth(0.8)
-    pdf.line(sec_x + 2.5 * mm, sec_y - 22 * mm, sec_x + 52.5 * mm, sec_y - 22 * mm)
+    pdf.line(sec_x + 2.5 * mm, sec_y - 21 * mm, sec_x + 52.5 * mm, sec_y - 21 * mm)
     
     # 5. Position
     pdf.setFont("Helvetica", 8.5)
-    pdf.drawCentredString(sec_x + 27.5 * mm, sec_y - 26 * mm, "Barangay Secretary")
+    pdf.drawCentredString(sec_x + 27.5 * mm, sec_y - 25 * mm, "Barangay Secretary")
     
     # Enhanced footer design
     pdf.setStrokeColor(GOLD)
