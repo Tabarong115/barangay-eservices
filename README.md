@@ -23,12 +23,18 @@ The app is now production-ready and fully operational with the following capabil
 - Manual payment proof review for the GCash payment flow
 - Certificate generation in PDF format after approval with professional design elements
 - Barangay logo and signature management from the Settings page (upload functionality fully functional)
-- Official names management for Punong Barangay and Secretary (displayed on certificates as "Signature over printed name")
+- Official names management for Punong Barangay, Secretary, and Treasurer (displayed on certificates with proper signature format)
+- Treasurer signature and GCash QR code management for payment processing
+- Contact information management (phone, email, Facebook) for public accessibility
+- **Citizens' Charter page** compliant with ARTA (Anti-Red Tape Authority) guidelines
+- **Enhanced signature format:** Professional signature layout with "Approved by/Attested by" → Signature → Printed Name → Line → Position
 - Supabase-backed persistence for requests, settings, and uploaded files
+- Production-ready settings management (Supabase-first with local fallback for development)
 - Local fallback behavior for development and testing when Supabase is unavailable
 - Production-ready templates with professional messaging and consistent styling
 - Enhanced certificate content with proper purpose display and residency duration information
 - QR code verification for certificate authenticity checking
+- **GCash QR code display** in payment form for easier payment processing
 
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
@@ -49,6 +55,7 @@ The current workflow is:
 - PIL (Pillow) - Image processing for uploads and certificates
 - UUID - Unique file naming and reference numbers
 - qrcode - QR code generation for certificate verification
+- **Temporary file management** for production deployment on Render
 
 ## Local setup
 
@@ -105,7 +112,11 @@ This sets up:
 - row-level security policies
 - initial barangay settings row
 
-**Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements. For existing deployments, run `add_official_names_migration.sql` to add official name fields.
+**Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements. For existing deployments, run:
+- `add_official_names_migration.sql` to add official name fields
+- `add_contact_info_migration.sql` to add contact information and Treasurer settings (including GCash QR code support)
+
+**Storage Bucket Setup:** The migration includes instructions for creating the "qrcodes" storage bucket in Supabase Storage for GCash QR code functionality. Follow the manual steps in the migration file to set up the bucket with appropriate RLS policies.
 
 ### 5) Start the app
 
@@ -114,7 +125,9 @@ python app.py
 ```
 
 Then open:
-- http://127.0.0.1:5000
+- http://127.0.0.1:5000 (Public Portal)
+- http://127.0.0.1:5000/citizens-charter (Citizens' Charter)
+- http://127.0.0.1:5000/dashboard (Staff Dashboard)
 
 ## Dashboard access
 
@@ -135,16 +148,24 @@ The app is production-ready and fully operational on Render with enhanced featur
 ### Recent improvements
 - **Enhanced tracking workflow:** Citizens can copy or download their tracking numbers as vouchers to prevent loss
 - **Secretary dashboard enhancement:** Secretary can view all requests and search by name/tracking number to assist citizens
+- **Request sorting optimization:** Latest requests now appear at the top of the dashboard for improved workflow efficiency
 - **Fixed file upload functionality:** Logo and signature uploads now work correctly in both local and production environments
 - **Production-ready templates:** All templates updated with professional messaging and consistent styling
 - **Improved user experience:** Better error handling, clearer instructions, and more intuitive interface
 - **Professional certificate design:** Enhanced PDF certificates with tasteful, professional design elements including double borders, watermarks, improved typography, and better signature placement
 - **Fixed certificate content issues:** Corrected purpose field display for Certificate of Indigency and Certificate of Residency, and fixed residency years/months display in Certificate of Residency
 - **Grammar corrections:** Removed redundant "for any lawful purpose it may serve" phrases when users specify actual purposes
-- **Official names feature:** Added Punong Barangay and Secretary name fields in Settings page, displayed on certificates as "Signature over printed name"
+- **Official names feature:** Added Punong Barangay, Secretary, and Treasurer name fields in Settings page
+- **Professional signature format:** Implemented correct certificate signature layout (Approved by/Attested by → Signature → Printed Name → Line → Position)
 - **Enhanced verification security:** Certificate verification page now includes verification timestamp, record ID, and additional security information
 - **Certificate spacing fixes:** Adjusted First Time Job Seeker certificate spacing to prevent text overlap with signature areas
-- **Signature positioning:** Lowered digital signature positions by 5mm for better visual alignment
+- **Signature positioning:** Optimized digital signature positions with proper font hierarchy for professional appearance
+- **Citizens' Charter page:** Added ARTA-compliant Citizens' Charter with complete service specifications, procedures, fees, and processing times
+- **Contact information management:** Added phone, email, and Facebook contact details management via Settings page
+- **Treasurer settings enhancement:** Added Treasurer signature upload and name management for complete staff information
+- **GCash QR code integration:** Added GCash QR code upload feature for payment processing, displayed in payment form
+- **Production storage optimization:** Implemented Supabase-first storage with temporary file cleanup for Render deployment
+- **Navigation improvements:** Simplified navigation text and added Citizens' Charter access
 
 ### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
@@ -162,15 +183,44 @@ While the app is production-ready for public use, the following security enhance
 - Forced tracking number retention (copy or download voucher)
 - Real-time request status tracking
 - Downloadable PDF certificates upon approval
+- **Citizens' Charter access** with complete service information, fees, and processing times
+- **GCash QR code display** for convenient payment processing
+- Contact information access (phone, email, Facebook)
 
 ### For Staff
 - Role-based dashboard (Secretary, Treasurer, Punong Barangay)
 - Secretary can view all requests and search to assist citizens
+- **Latest-first request sorting** for improved workflow efficiency
 - Photo verification for ID and selfie uploads
 - Payment proof review and verification
 - Professional certificate generation with custom logos and signatures
+- **Enhanced signature management** for Punong Barangay, Secretary, and Treasurer
+- **GCash QR code management** for payment processing
 - Settings management for barangay branding
-- Official names management for Punong Barangay and Secretary
+- Official names management for all staff positions
+- Contact information management for public accessibility
+
+## Citizens' Charter
+
+The app includes a comprehensive Citizens' Charter page compliant with Republic Act 11032 (Ease of Doing Business and Efficient Government Service Delivery Act of 2018) and ARTA guidelines.
+
+### Charter features
+- **Mandate, Vision, Mission, and Service Pledge** for transparency
+- **Complete service specifications** for all 6 certificate types
+- **Service procedures** with step-by-step client actions and agency responses
+- **Processing times** and fee information for each service
+- **Requirements checklist** for each certificate type
+- **Contact information** including phone, email, and Facebook
+- **Complaints and feedback mechanism** with multiple channels
+- **Professional formatting** consistent with ARTA standards
+
+### Service information included
+- Classification (Simple transactions)
+- Transaction type (G2C - Government to Citizen, G2B - Government to Business)
+- Who may avail each service
+- Complete requirements list
+- Processing workflow with responsible personnel
+- Fee structure (Free services: Residency, Indigency, Job Seeker; Paid services: Clearance, Certification, Business Closure)
 
 ## Certificate generation
 
@@ -186,15 +236,45 @@ The app generates professional A4-size PDF certificates for all services with en
 
 ### Certificate types
 - **Barangay Clearance** - General purpose clearance certificate
-- **Barangay Certification** - General purpose certification
-- **Certificate of Residency** - Proof of residency with years/months of residence
-- **Certificate of Indigency** - Financial indigency certification with family size and income details
+- **Barangay Certification** - General purpose certification  
+- **Certificate of Residency** - Proof of residency for indigency and other purposes
+- **Certificate of Indigency** - Financial need certification for government services
 - **Business Closure Certification** - Business closure documentation
-- **First Time Job Seeker Certification** - Job seeker assistance under Republic Act No. 11261
+- **First Time Job Seeker Certification** - Employment assistance for first-time job seekers
+
+### Signature format
+Certificates now follow professional signature formatting:
+- **Punong Barangay:** "Approved by" → Signature → Printed Name → Line → "Punong Barangay"
+- **Secretary:** "Attested by" → Signature → Printed Name → Line → "Barangay Secretary"
+- Proper font hierarchy with printed names most prominent
+- Consistent positioning and spacing for professional appearance
 
 ### Certificate content fixes
 - **Purpose field display:** Fixed missing purpose display in Certificate of Indigency and Certificate of Residency
 - **Residency duration:** Fixed years/months display in Certificate of Residency
+
+## Settings Management
+
+The Settings page provides comprehensive management of barangay branding and operational information:
+
+### Available Settings
+- **Barangay Logo:** Upload and manage barangay logo displayed on certificates and pages
+- **Punong Barangay Signature:** Upload signature and set official name for certificates
+- **Secretary Signature:** Upload signature and set official name for certificates
+- **Treasurer Information:** Upload signature, set official name, and manage GCash QR code
+- **Contact Information:** Set phone number, email address, and Facebook page for public access
+
+### GCash QR Code
+- Upload GCash QR code image for payment processing
+- Displayed in payment form for citizens to scan and pay
+- Supports JPEG and PNG formats
+- Stored in Supabase Storage with public access for payment form display
+
+### Storage Strategy
+- **Production:** Supabase-first storage with automatic fallback prevention
+- **Development:** Local file fallback when Supabase is unavailable
+- **Render-compatible:** Temporary file management for ephemeral file systems
+- **Automatic cleanup:** Temporary files removed after successful Supabase upload
 - **Grammar corrections:** Removed redundant phrases when users specify actual purposes
 - **Database integration:** Ensured all form fields are properly stored in Supabase and retrieved for certificate generation
 
