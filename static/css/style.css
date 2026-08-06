@@ -147,7 +147,7 @@ h3 { color: var(--navy); font-size: 1.05rem; line-height: 1.25; margin: 16px 0 8
   outline: 2px solid #d8e5f6;
 }
 
-@media (max-width: 760px) { .site-header, .section-heading, .request-card { align-items: flex-start; flex-direction: column; } .site-header { gap: 12px; } .service-grid, .dashboard-grid, .service-summary, .form-row, .payment-details { grid-template-columns: 1fr; } .request-card { gap: 12px; }.payment-details { text-align: center; }.qr-placeholder { margin: 0 auto; }.qr-image { margin: 0 auto; }.hero, .dashboard-hero { padding-top: 52px; padding-bottom: 52px; } }
+@media (max-width: 760px) { .site-header, .section-heading, .request-card { align-items: flex-start; flex-direction: column; } .site-header { gap: 12px; } .service-grid, .dashboard-grid, .settings-grid, .service-summary, .form-row, .payment-details { grid-template-columns: 1fr; } .request-card { gap: 12px; }.payment-details { text-align: center; }.qr-placeholder { margin: 0 auto; }.qr-image { margin: 0 auto; }.hero, .dashboard-hero { padding-top: 52px; padding-bottom: 52px; } }
 
 .confirmation-box.success {
   border-left-color: #059669;
