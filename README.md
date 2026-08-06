@@ -35,6 +35,7 @@ The app is now production-ready and fully operational with the following capabil
 - Enhanced certificate content with proper purpose display and residency duration information
 - QR code verification for certificate authenticity checking
 - **GCash QR code display** in payment form for easier payment processing
+- **Facebook Messenger notifications** (In Development) - Staff notification system for request workflow updates
 
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
@@ -55,7 +56,359 @@ The current workflow is:
 - PIL (Pillow) - Image processing for uploads and certificates
 - UUID - Unique file naming and reference numbers
 - qrcode - QR code generation for certificate verification
+- **requests** - HTTP library for Facebook Messenger API integration (In Development)
 - **Temporary file management** for production deployment on Render
+
+## Facebook Messenger Notifications (In Development)
+
+### Overview
+A Facebook Messenger-based staff notification system to alert the 3 staff members (Secretary, Treasurer, Punong Barangay) when:
+- Citizens submit new service requests
+- Payment proofs are uploaded
+- Request statuses change during workflow
+- Certificates are approved and generated
+
+### Why Facebook Messenger?
+- **Works on free data** (Facebook Free Basics in the Philippines)
+- **No app installation needed** (staff already use Facebook)
+- **Real-time alerts** for immediate response
+- **Familiar interface** for barangay staff
+- **Group coordination** through Facebook groups
+
+### Current Implementation Status
+
+#### ✅ Completed Components
+1. **Facebook Notification Module** (`facebook_notifier.py`)
+   - FacebookNotifier class with API integration
+   - Functions for all notification types:
+     - `notify_new_request()` - Alerts when citizens submit requests
+     - `notify_status_change()` - Alerts at workflow stage changes
+     - `notify_payment_submitted()` - Alerts Treasurer when payment proof uploaded
+     - `notify_approval()` - Alerts when certificate is generated
+   - Support for both group posts and direct messages
+   - Automatic fallback from group to individual messaging
+
+2. **App Integration** (Modified `app.py`)
+   - Notifications integrated into all 6 service types:
+     - Barangay Clearance
+     - Barangay Certification
+     - Certificate of Residency
+     - Certificate of Indigency
+     - Business Closure Certification
+     - First Time Job Seeker Certification
+   - Triggers at key workflow points:
+     - New request submission
+     - Payment proof upload
+     - Status changes (Secretary review, Treasurer verification, etc.)
+     - Final approval
+
+3. **Configuration Setup** (Updated `.env.example`)
+   - Facebook Page Access Token
+   - Facebook Page ID
+   - Facebook App ID
+   - Facebook App Secret
+   - Staff Group ID (for group notifications)
+   - Staff User IDs (for direct messaging fallback)
+
+4. **Test Suite** (`test_facebook_notifications.py`)
+   - Configuration verification
+   - Individual notification testing
+   - Comprehensive test validation
+
+5. **Dependencies** (Updated `requirements.txt`)
+   - Added `requests>=2.31,<3.0` for Facebook API calls
+
+#### ❌ Pending Setup (Current Blocker)
+**Facebook App Creation Issue**: The developer is having difficulty creating the Facebook App required for the Messenger API integration.
+
+### Facebook Page Status
+- **Page Created**: ✅ https://www.facebook.com/profile.php?id=61592616314846&sk=about
+- **Page Name**: Barangay 7 Services (assumed based on URL)
+- **Page ID**: 61592616314846 (extracted from URL)
+- **Status**: Ready for app integration
+
+### Complete Setup Workflow for Next AI
+
+#### Phase 1: Facebook App Creation (Current Blocker)
+**Objective**: Create and configure Facebook Developer App for Messenger API access
+
+**Steps to Complete**:
+1. **Navigate to Facebook Developers Portal**
+   - Go to https://developers.facebook.com
+   - Log in with the same account that created the Facebook Page
+
+2. **Create a New App**
+   - Click "Create App" (top right)
+   - Select app type: "Business" (recommended for government services)
+   - Fill in app details:
+     - **App name**: "Barangay 7 Services Bot"
+     - **App contact email**: Developer's email address
+   - Complete security verification if prompted
+
+3. **Add Messenger Product**
+   - In App Dashboard, find "Add Product" in left sidebar
+   - Search for "Messenger" and click "Add"
+   - This enables Messenger API capabilities
+
+4. **Configure Messenger Settings**
+   - Navigate to Messenger → Settings
+   - Scroll to "Access Tokens" section
+   - Click "Create New Token" or "Generate Token"
+   - Select the Barangay 7 Services page from dropdown
+   - **CRITICAL**: Copy the generated Page Access Token immediately
+   - Store securely (you won't see it again)
+
+5. **Get App Credentials**
+   - Go to App Settings → Basic
+   - Copy these credentials:
+     - **App ID** (shown in Basic settings)
+     - **App Secret** (shown in Basic settings, click "Show" to reveal)
+
+6. **Configure App Permissions**
+   - In App Dashboard → App Review
+   - Request necessary permissions:
+     - `pages_messaging` (for sending messages)
+     - `pages_read_engagement` (for reading page content)
+   - Submit for review if required (may take 1-2 business days)
+
+7. **Verify Page Access**
+   - Ensure the app has access to the Barangay 7 Services page
+   - Test connection using Facebook's testing tools
+
+#### Phase 2: Staff Group Setup
+**Objective**: Create Facebook group for staff notifications
+
+**Steps to Complete**:
+1. **Create Private Facebook Group**
+   - Use personal Facebook account
+   - Create group: "Barangay 7 Staff Notifications"
+   - Set as "Private" (only members can see posts)
+
+2. **Add Staff Members**
+   - Add Secretary (personal account)
+   - Add Treasurer (personal account)
+   - Add Punong Barangay (personal account)
+
+3. **Add Facebook Page to Group**
+   - Add "Barangay 7 Services" page as a group member
+   - This allows the page bot to post in the group
+   - **Extract Group ID**: From URL when viewing group (facebook.com/groups/GROUP_ID)
+
+#### Phase 3: Environment Configuration
+**Objective**: Configure Flask app with Facebook credentials
+
+**Steps to Complete**:
+1. **Update `.env` file**
+   ```env
+   # Facebook Messenger Notifications
+   FACEBOOK_PAGE_ACCESS_TOKEN=EAABwzLixnjYBAO... (from Phase 1)
+   FACEBOOK_PAGE_ID=61592616314846 (known)
+   FACEBOOK_APP_ID=123456789 (from Phase 1)
+   FACEBOOK_APP_SECRET=abcdef123456 (from Phase 1)
+   FACEBOOK_STAFF_GROUP_ID=123456789 (from Phase 2)
+   # Alternative: Individual staff user IDs (comma-separated)
+   FACEBOOK_STAFF_USER_IDS=staff_id_1,staff_id_2,staff_id_3
+   ```
+
+2. **Extract Staff User IDs (Optional)**
+   - For direct messaging fallback, get staff Facebook user IDs
+   - Use Facebook Graph API Explorer or third-party tools
+   - Format: Comma-separated list of numeric IDs
+
+#### Phase 4: Testing and Validation
+**Objective**: Verify notification system works correctly
+
+**Steps to Complete**:
+1. **Run Configuration Test**
+   ```powershell
+   python test_facebook_notifications.py
+   ```
+   - Verify all credentials are recognized
+   - Check API connectivity
+
+2. **Test Individual Notifications**
+   - Run test suite with user confirmation
+   - Verify each notification type arrives in Facebook group
+   - Check message formatting and content
+
+3. **Test Integration with App**
+   - Submit a test service request through the portal
+   - Verify staff receive notification in Facebook group
+   - Test workflow progression notifications
+   - Verify payment submission notifications
+   - Test approval notifications
+
+4. **Production Deployment**
+   - Add Facebook credentials to Render environment variables
+   - Test in production environment
+   - Monitor notification delivery and reliability
+
+### Notification Workflow Design
+
+#### Current Workflow with Notifications
+```
+Citizen submits request
+↓
+[Facebook Notification] → Staff Group: "🔔 NEW SERVICE REQUEST SUBMITTED"
+↓
+Secretary reviews request
+↓
+[Facebook Notification] → Staff Group: "📋 REQUEST STATUS UPDATE: Secretary Reviewed"
+↓
+(Paid services) Citizen uploads payment proof
+↓
+[Facebook Notification] → Staff Group: "💰 PAYMENT PROOF SUBMITTED" (Treasurer alert)
+↓
+Treasurer verifies payment
+↓
+[Facebook Notification] → Staff Group: "📋 REQUEST STATUS UPDATE: Treasurer Verified"
+↓
+Punong Barangay approves request
+↓
+[Facebook Notification] → Staff Group: "✅ REQUEST APPROVED"
+↓
+Certificate generated and stored
+```
+
+#### Notification Message Format
+Each notification includes:
+- **Emoji indicators** for quick recognition (🔔📋💰✅)
+- **Service type** and reference number
+- **Applicant name** and contact information
+- **Action required** or status change
+- **Professional formatting** with clear sections
+- **Branding footer**: "📱 Barangay 7 e-Services Portal"
+
+### Technical Implementation Details
+
+#### API Integration
+- **Endpoint**: Facebook Graph API v18.0
+- **Authentication**: Page Access Token
+- **Rate Limits**: Respect Facebook's API rate limits
+- **Error Handling**: Graceful fallback if API fails
+
+#### Notification Logic
+```python
+# In app.py - Example integration
+if facebook_notifier.is_configured():
+    request_data["service_type"] = "barangay_clearance"
+    facebook_notifier.notify_new_request(request_data)
+```
+
+#### Fallback Strategy
+1. **Primary**: Post to Facebook staff group
+2. **Fallback**: Direct messages to individual staff accounts
+3. **Failure**: Log error and continue workflow (notifications are non-blocking)
+
+### Troubleshooting Guide for Next AI
+
+**IMPORTANT**: The developer has successfully created the Facebook Page (https://www.facebook.com/profile.php?id=61592616314846&sk=about) but is experiencing difficulty creating the Facebook Developer App. This is the current blocker preventing the notification system from being activated.
+
+#### Common Facebook App Creation Issues
+1. **App Creation Fails**
+   - Check account permissions
+   - Verify phone number is confirmed on Facebook
+   - Try different browser or incognito mode
+
+2. **Permission Errors**
+   - Ensure app has `pages_messaging` permission
+   - Check app review status
+   - Verify page ownership
+
+3. **Token Generation Issues**
+   - Ensure page is properly connected to app
+   - Check admin privileges on the page
+   - Regenerate token if expired
+
+#### API Integration Issues
+1. **Authentication Failures**
+   - Verify Page Access Token is correct
+   - Check token hasn't expired
+   - Ensure token has necessary permissions
+
+2. **Group Posting Failures**
+   - Verify group ID is correct
+   - Check page is member of the group
+   - Ensure page has posting permissions
+
+3. **Rate Limiting**
+   - Implement exponential backoff
+   - Batch notifications when possible
+   - Monitor API usage
+
+### Alternative Notification Options (If Facebook Fails)
+
+If Facebook App creation continues to be problematic, consider these alternatives:
+
+1. **Email Notifications** (Simplest)
+   - Use Flask-Mail or Python's smtplib
+   - Staff receive email alerts
+   - No external API setup required
+
+2. **Telegram Bot** (Best Free Alternative)
+   - Create Telegram bot (@BotFather)
+   - Add staff to group with bot
+   - 100% free, unlimited messages
+   - Easier setup than Facebook
+
+3. **Discord Webhooks** (Team Coordination)
+   - Create Discord server for staff
+   - Simple webhook integration
+   - Real-time notifications
+   - Free for small teams
+
+4. **WhatsApp Business** (Mobile-First)
+   - Use WhatsApp Business API
+   - Direct to staff phones
+   - Higher engagement than email
+   - Setup complexity similar to Facebook
+
+### Files Modified/Added for Notifications
+
+**New Files**:
+- `facebook_notifier.py` - Core notification module
+- `test_facebook_notifications.py` - Testing suite
+
+**Modified Files**:
+- `app.py` - Integrated notification calls in workflow
+- `requirements.txt` - Added requests library
+- `.env.example` - Added Facebook configuration variables
+
+### Next Steps for Next AI
+
+1. **Immediate Priority**: Complete Facebook App creation
+   - Guide developer through the exact steps
+   - Troubleshoot any creation issues
+   - Obtain all required credentials
+
+2. **Configuration**: Set up environment variables
+   - Add credentials to `.env` file
+   - Test configuration recognition
+   - Verify API connectivity
+
+3. **Testing**: Validate notification system
+   - Run test suite
+   - Test end-to-end workflow
+   - Verify message delivery
+
+4. **Deployment**: Configure production environment
+   - Add credentials to Render
+   - Test in production
+   - Monitor reliability
+
+5. **Documentation**: Update user guides
+   - Add staff notification setup instructions
+   - Create troubleshooting guide
+   - Document notification preferences
+
+### Benefits for Barangay Operations
+
+- **Faster Response Times**: Staff immediately notified of new requests
+- **Better Coordination**: All staff see same notifications in group
+- **Reduced Delays**: No need to manually check dashboard
+- **Mobile Access**: Works on staff phones with free data
+- **Professional Communication**: Consistent, formatted notifications
+- **Workflow Transparency**: Clear visibility of request progress
 
 ## Local setup
 
@@ -100,6 +453,16 @@ PILOT_CHAIRMAN_PASSWORD=chairman-test
 GCASH_ACCOUNT_NAME=Barangay 7
 GCASH_ACCOUNT_NUMBER=09XXXXXXXXX
 BASE_URL=http://127.0.0.1:5000
+
+# Facebook Messenger Notifications (Optional - In Development)
+# Only configure these if you want to enable staff notifications via Facebook Messenger
+# See "Facebook Messenger Notifications" section below for setup instructions
+FACEBOOK_PAGE_ACCESS_TOKEN=your-page-access-token-here
+FACEBOOK_PAGE_ID=61592616314846
+FACEBOOK_APP_ID=your-facebook-app-id-here
+FACEBOOK_APP_SECRET=your-facebook-app-secret-here
+FACEBOOK_STAFF_GROUP_ID=your-staff-group-id-here
+FACEBOOK_STAFF_USER_IDS=staff_user_id_1,staff_user_id_2,staff_user_id_3
 ```
 
 ### 4) Prepare Supabase
@@ -202,6 +565,7 @@ While the app is production-ready for public use, the following security enhance
 - Settings management for barangay branding
 - Official names management for all staff positions
 - Contact information management for public accessibility
+- **Facebook Messenger notifications** (In Development) - Real-time alerts for request workflow updates
 
 ## Citizens' Charter
 
@@ -311,6 +675,12 @@ Configure these in your hosting provider (Render Dashboard → Environment tab):
 - `GCASH_ACCOUNT_NAME` - GCash account name for payments
 - `GCASH_ACCOUNT_NUMBER` - GCash account number for payments
 - `BASE_URL` - Base URL for QR code generation (e.g., https://your-domain.com)
+- `FACEBOOK_PAGE_ACCESS_TOKEN` - Facebook Page Access Token for notifications (optional)
+- `FACEBOOK_PAGE_ID` - Facebook Page ID for notifications (optional)
+- `FACEBOOK_APP_ID` - Facebook App ID for notifications (optional)
+- `FACEBOOK_APP_SECRET` - Facebook App Secret for notifications (optional)
+- `FACEBOOK_STAFF_GROUP_ID` - Facebook Group ID for staff notifications (optional)
+- `FACEBOOK_STAFF_USER_IDS` - Comma-separated staff Facebook user IDs (optional)
 
 ### Environment configuration architecture
 
@@ -359,6 +729,8 @@ barangay-eservices/
 ├── config.py                       # Environment configuration
 ├── database.py                     # Supabase database operations
 ├── certificate_generator.py        # Professional PDF certificate generation with enhanced design
+├── facebook_notifier.py            # Facebook Messenger notification system (In Development)
+├── test_facebook_notifications.py  # Facebook notification testing suite
 ├── requirements.txt                 # Development dependencies
 ├── requirements-prod.txt           # Production dependencies
 ├── Procfile                        # Heroku/Render deployment
@@ -395,6 +767,19 @@ barangay-eservices/
 - **Security:** Keep `.env` file private and never commit to Git. Use strong secret keys in production.
 
 ## Recent updates
+
+### Version 1.4 (In Development - August 2026)
+- **Facebook Messenger Notifications System** (In Progress)
+  - Created FacebookNotifier class for API integration
+  - Implemented notification functions for all workflow stages
+  - Integrated notifications into all 6 service types
+  - Added support for group posts and direct messaging
+  - Created comprehensive test suite for validation
+  - Updated configuration system for Facebook credentials
+  - **Current Status**: Implementation complete, awaiting Facebook App creation
+  - **Blocker**: Developer experiencing difficulty creating Facebook Developer App
+  - **Facebook Page**: Created (https://www.facebook.com/profile.php?id=61592616314846&sk=about)
+  - **Next Step**: Complete Facebook App setup and credential configuration
 
 ### Version 1.3 (Current - August 2026)
 - Optimized certificate layout with improved header spacing, body content positioning, and signature alignment
