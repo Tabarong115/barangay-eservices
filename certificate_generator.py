@@ -158,7 +158,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("punong_barangay_signature_path"):
         image_reader = _load_image(request_data["punong_barangay_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, pb_x + 2.5 * mm, pb_y - 17 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, pb_x + 2.5 * mm, pb_y - 25 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 10)
@@ -171,11 +171,11 @@ def _add_enhanced_footer(pdf, request_data, margin):
     # 4. Short Line
     pdf.setStrokeColor(NAVY)
     pdf.setLineWidth(0.8)
-    pdf.line(pb_x + 2.5 * mm, pb_y - 24 * mm, pb_x + 52.5 * mm, pb_y - 24 * mm)
+    pdf.line(pb_x + 2.5 * mm, pb_y - 21 * mm, pb_x + 52.5 * mm, pb_y - 21 * mm)
     
     # 5. Position
     pdf.setFont("Helvetica", 8.5)
-    pdf.drawCentredString(pb_x + 27.5 * mm, pb_y - 28 * mm, "Punong Barangay")
+    pdf.drawCentredString(pb_x + 27.5 * mm, pb_y - 25 * mm, "Punong Barangay")
     
     # Secretary signature section (left side)
     sec_y = 80 * mm
@@ -190,7 +190,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("secretary_signature_path"):
         image_reader = _load_image(request_data["secretary_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, sec_x + 2.5 * mm, sec_y - 20 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, sec_x + 2.5 * mm, sec_y - 25 * mm, width=50 * mm, height=18 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 10)
@@ -222,7 +222,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if qr_code:
         qr_size = 22 * mm
         qr_x = PAGE_WIDTH - margin - qr_size - 5 * mm
-        qr_y = 35 * mm  # Positioned above footer line
+        qr_y = 40 * mm  # Positioned above footer line
         pdf.drawImage(qr_code, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True, mask="auto")
         
         # Add QR code label
