@@ -222,7 +222,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if qr_code:
         qr_size = 22 * mm
         qr_x = PAGE_WIDTH - margin - qr_size - 5 * mm
-        qr_y = 40 * mm  # Positioned above footer line
+        qr_y = 25 * mm  # Positioned above footer line
         pdf.drawImage(qr_code, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True, mask="auto")
         
         # Add QR code label
