@@ -156,7 +156,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("punong_barangay_signature_path"):
         image_reader = _load_image(request_data["punong_barangay_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, pb_x + 5 * mm, pb_y - 18 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, pb_x + 5 * mm, pb_y - 13 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 11)
@@ -176,7 +176,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     pdf.drawCentredString(pb_x + 30 * mm, pb_y - 30 * mm, "Punong Barangay")
     
     # Secretary signature section (left side)
-    sec_y = 45 * mm
+    sec_y = 53 * mm
     sec_x = margin
     
     # 1. "Attested by" text
@@ -188,7 +188,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     if request_data.get("secretary_signature_path"):
         image_reader = _load_image(request_data["secretary_signature_path"])
         if image_reader:
-            pdf.drawImage(image_reader, sec_x + 5 * mm, sec_y - 18 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
+            pdf.drawImage(image_reader, sec_x + 5 * mm, sec_y - 13 * mm, width=50 * mm, height=20 * mm, preserveAspectRatio=True, mask="auto")
     
     # 3. Printed Name
     pdf.setFont("Helvetica-Bold", 11)
@@ -279,10 +279,10 @@ def generate_barangay_clearance(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 130 * mm, f"Certificate No. {request_data['certificate_number']}")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 138 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     purpose = request_data.get("purpose", "any lawful purpose it may serve")
     template_data = dict(request_data)
@@ -290,7 +290,7 @@ def generate_barangay_clearance(request_data, output_path):
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar. This Barangay Clearance is issued upon the request of "
             "the above-named person for <b>{purpose}</b>.").format(**template_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
@@ -317,10 +317,10 @@ def generate_barangay_certification(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 130 * mm, f"Certificate No. {request_data['certificate_number']}")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 138 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     purpose = request_data.get("purpose", "any lawful purpose it may serve")
     template_data = dict(request_data)
@@ -328,7 +328,7 @@ def generate_barangay_certification(request_data, output_path):
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar. This Barangay Certification is issued upon the request of "
             "the above-named person for <b>{purpose}</b>.").format(**template_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
@@ -355,10 +355,10 @@ def generate_certificate_of_residency(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 130 * mm, f"Certificate No. {request_data['certificate_number']}")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 138 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     # Support both field naming conventions for compatibility
     years = request_data.get('years_resided') or request_data.get('residency_years', '0')
@@ -370,7 +370,7 @@ def generate_certificate_of_residency(request_data, output_path):
     text = ("This is to certify that <b>{full_name}</b>, of <b>{address}</b>, is a bona fide resident of Barangay 7, "
             "Poblacion, Salcedo, Eastern Samar, having resided at the above address for <b>{}</b>. "
             "This Certificate of Residency is issued upon the request of the above-named person for <b>{purpose}</b>.").format(residency_text, **template_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
@@ -397,10 +397,10 @@ def generate_certificate_of_indigency(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 130 * mm, f"Certificate No. {request_data['certificate_number']}")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 138 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     family_info = f"with a family size of {request_data.get('family_size', '0')} and a monthly household income of ₱{request_data.get('monthly_income', '0')}"
     purpose = request_data.get("purpose", "any lawful purpose it may serve")
@@ -410,7 +410,7 @@ def generate_certificate_of_indigency(request_data, output_path):
             "Poblacion, Salcedo, Eastern Samar, {family_info}. This Certificate of Indigency is issued upon the request of "
             "the above-named person for <b>{purpose}</b>.").format(
                 family_info=family_info, **template_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
@@ -437,10 +437,10 @@ def generate_business_closure_certification(request_data, output_path):
     pdf.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT - 130 * mm, f"Certificate No. {request_data['certificate_number']}")
     
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=12)
-    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=15)
+    body = ParagraphStyle("CertificateBody", parent=styles["Normal"], fontName="Helvetica", fontSize=11.5, leading=22, alignment=TA_JUSTIFY, textColor=INK, spaceAfter=8)
+    heading = ParagraphStyle("CertificateHeading", parent=body, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=10)
     y = PAGE_HEIGHT - 138 * mm
-    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 11 * mm
+    y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 8 * mm
     
     closure_date = request_data.get("closure_date", "")
     if closure_date:
@@ -456,7 +456,7 @@ def generate_business_closure_certification(request_data, output_path):
             "The reason for closure is stated as: <b>{reason}</b>. "
             "This Business Closure Certification is issued upon the request of the business owner.").format(
                 closure_date=closure_date, **request_data)
-    y = _paragraph(pdf, text, margin, y, content_width, body) - 12 * mm
+    y = _paragraph(pdf, text, margin, y, content_width, body) - 8 * mm
     y = _paragraph(pdf, "Issued this <b>{}</b> at Barangay 7, Poblacion, Salcedo, Eastern Samar, Philippines.".format(request_data["issued_at"].strftime("%d day of %B %Y")), margin, y, content_width, body)
     
     _add_enhanced_footer(pdf, request_data, margin)
