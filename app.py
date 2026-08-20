@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 import json
 from io import BytesIO
+from zoneinfo import ZoneInfo
 
 from functools import wraps
 
@@ -1678,7 +1679,7 @@ def verify_certificate():
     
     # Certificate is valid
     from datetime import datetime
-    verification_timestamp = datetime.now()
+    verification_timestamp = datetime.now(ZoneInfo("Asia/Manila"))
     return render_template("verify_certificate.html",
                          valid=True,
                          certificate=certificate_data,
