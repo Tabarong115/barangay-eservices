@@ -19,6 +19,8 @@ The app is now production-ready and fully operational with the following capabil
   - Downloadable voucher containing tracking number and request details
   - Secretary dashboard with full visibility of all requests to assist citizens who forgot tracking numbers
   - Search functionality for Secretary to quickly find requests by name, tracking number, or contact
+  - **Request decline functionality** with specific reasons for each certificate type
+  - Declined requests show reason and notes in client tracking page
 - Staff dashboard for Secretary, Treasurer, and Punong Barangay workflow
 - Manual payment proof review for the GCash payment flow
 - Certificate generation in PDF format after approval with professional design elements
@@ -40,11 +42,12 @@ The app is now production-ready and fully operational with the following capabil
 
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
-2. Secretary reviews and forwards the request (can view all requests for citizen assistance)
+2. Secretary reviews and can either approve/forward or decline the request (can view all requests for citizen assistance)
 3. Paid services: applicant uploads GCash payment proof, then the Treasurer verifies it and forwards the request
 4. Free services: the request bypasses GCash and the Treasurer, and goes directly to the Punong Barangay
-5. Punong Barangay approves the request
-6. PDF certificate is generated and stored
+5. Punong Barangay can approve or decline the request
+6. PDF certificate is generated and stored (for approved requests)
+7. Declined requests show specific reasons and notes in the client tracking page
 
 ## Tech stack
 
@@ -117,6 +120,7 @@ This sets up:
 **Note:** If you have an existing database with requests, run any available migration SQL files to apply certificate content fixes and database improvements. For existing deployments, run:
 - `add_official_names_migration.sql` to add official name fields
 - `add_contact_info_migration.sql` to add contact information and Treasurer settings (including GCash QR code support)
+- `add_decline_fields_migration.sql` to add decline functionality (decline reasons, notes, and declined by fields)
 
 **Storage Bucket Setup:** The migration includes instructions for creating the "qrcodes" storage bucket in Supabase Storage for GCash QR code functionality. Follow the manual steps in the migration file to set up the bucket with appropriate RLS policies.
 

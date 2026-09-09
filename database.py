@@ -201,7 +201,10 @@ def update_service_request_status(
     status: str,
     secretary_notes: Optional[str] = None,
     treasurer_notes: Optional[str] = None,
-    chairman_notes: Optional[str] = None
+    chairman_notes: Optional[str] = None,
+    decline_reason: Optional[str] = None,
+    decline_notes: Optional[str] = None,
+    declined_by: Optional[str] = None
 ) -> bool:
     """Update the status and notes of a service request."""
     if not is_supabase_connected():
@@ -215,12 +218,21 @@ def update_service_request_status(
             update_data["treasurer_notes"] = treasurer_notes
         if chairman_notes is not None:
             update_data["chairman_notes"] = chairman_notes
+        if decline_reason is not None:
+            update_data["decline_reason"] = decline_reason
+        if decline_notes is not None:
+            update_data["decline_notes"] = decline_notes
+        if declined_by is not None:
+            update_data["declined_by"] = declined_by
         
         supabase.table("service_requests").update(update_data).eq("reference_number", reference_number).execute()
         return True
     except Exception as e:
         print(f"Error updating service request status: {e}")
         return False
+
+
+
 
 
 def update_payment_info(reference_number: str, payment_reference: str, payment_proof_filename: str) -> bool:

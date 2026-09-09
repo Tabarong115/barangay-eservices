@@ -119,6 +119,12 @@ def get_display_status(request_data: dict) -> str:
     """Translate stored status into the correct citizen and staff workflow status."""
     status = request_data.get("status", "")
     is_free = is_service_free(request_data.get("service_type", ""))
+    
+    # Handle declined status
+    if status == "declined":
+        decline_reason = request_data.get("decline_reason", "Request declined")
+        return f"Declined: {decline_reason}"
+    
     status_map = {
         "pending": "Pending Secretary Review",
         "secretary_reviewed": "Pending Punong Barangay Approval" if is_free else "Awaiting Applicant GCash Payment",
@@ -1329,6 +1335,75 @@ def dashboard():
             assigned_requests = [item for item in all_requests if item["status"] == "Pending Punong Barangay Approval"]
     
     return render_template("dashboard.html", requests=assigned_requests, role=role, username=session["staff_username"])
+
+
+@app.route("/dashboard/requests/<reference_number>/decline", methods=["POST"])
+@dashboard_login_required
+def decline_request(reference_number):
+    """Decline a service request with reason and notes."""
+    decline_reason = request.form.get("decline_reason", "").strip()
+    decline_notes = request.form.get("decline_notes", "").strip()
+    
+    if not decline_reason:
+        flash("Please provide a reason for declining the request.", "error")
+        return redirect(url_for("dashboard"))
+    
+    # Try Supabase first if connected
+    if is_supabase_connected():
+        clearance_request = get_service_request_by_reference(reference_number)
+        use_db = True
+    else:
+        # Fallback to in-memory search
+        clearance_request = next((item for item in CLEARANCE_REQUESTS if item["reference_number"] == reference_number), None)
+        request_list = CLEARANCE_REQUESTS
+        use_db = False
+        
+        if not clearance_request:
+            clearance_request = next((item for item in CERTIFICATION_REQUESTS if item["reference_number"] == reference_number), None)
+            request_list = CERTIFICATION_REQUESTS
+        
+        if not clearance_request:
+            clearance_request = next((item for item in RESIDENCY_REQUESTS if item["reference_number"] == reference_number), None)
+            request_list = RESIDENCY_REQUESTS
+        
+        if not clearance_request:
+            clearance_request = next((item for item in INDIGENCY_REQUESTS if item["reference_number"] == reference_number), None)
+            request_list = INDIGENCY_REQUESTS
+        
+        if not clearance_request:
+            clearance_request = next((item for item in BUSINESS_CLOSURE_REQUESTS if item["reference_number"] == reference_number), None)
+            request_list = BUSINESS_CLOSURE_REQUESTS
+        
+        if not clearance_request:
+            clearance_request = next((item for item in JOB_SEEKER_REQUESTS if item["reference_number"] == reference_number), None)
+            request_list = JOB_SEEKER_REQUESTS
+    
+    if not clearance_request:
+        abort(404)
+    
+    # Update status based on storage method
+    if use_db:
+        # Use database update function
+        declined_by = session.get("staff_role", "Staff")
+        success = update_service_request_status(
+            reference_number=reference_number,
+            status="declined",
+            decline_reason=decline_reason,
+            decline_notes=decline_notes,
+            declined_by=declined_by
+        )
+        if not success:
+            flash("Failed to decline request. Please try again.", "error")
+            return redirect(url_for("dashboard"))
+    else:
+        # Legacy in-memory update
+        clearance_request["status"] = f"Declined: {decline_reason}"
+        if decline_notes:
+            clearance_request["decline_notes"] = decline_notes
+        clearance_request["declined_by"] = session.get("staff_role", "Staff")
+    
+    flash(f"{reference_number} has been declined.", "success")
+    return redirect(url_for("dashboard"))
 
 
 @app.post("/dashboard/requests/<reference_number>/advance")

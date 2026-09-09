@@ -47,15 +47,18 @@
               <strong>{{ item.status }}</strong>
               {% set is_free = item.service_type in ['certificate_of_indigency', 'first_time_job_seeker'] %}
               {% if role != 'Secretary' or item.status == 'Pending Secretary Review' %}
-                <form method="post" action="{{ url_for('advance_request', reference_number=item.reference_number) }}">
-                  <button class="primary-button" type="submit">
-                    {% if role == 'Secretary' %}
-                      {% if is_free %}Approve & forward{% else %}Request GCash payment{% endif %}
-                    {% elif role == 'Treasurer' %}Verify payment & forward
-                    {% else %}Approve request
-                    {% endif %}
-                  </button>
-                </form>
+                <div class="action-buttons">
+                  <form method="post" action="{{ url_for('advance_request', reference_number=item.reference_number) }}">
+                    <button class="primary-button" type="submit">
+                      {% if role == 'Secretary' %}
+                        {% if is_free %}Approve & forward{% else %}Request GCash payment{% endif %}
+                      {% elif role == 'Treasurer' %}Verify payment & forward
+                      {% else %}Approve request
+                      {% endif %}
+                    </button>
+                  </form>
+                  <button class="decline-button" type="button" onclick="openDeclineModal('{{ item.reference_number }}', '{{ item.service_type if item.service_type else 'barangay_clearance' }}')">Decline</button>
+                </div>
               {% endif %}
             </div>
           </article>
@@ -65,9 +68,177 @@
       <article class="empty-state"><h2>No requests found</h2><p>{% if role == 'Secretary' %}No requests have been submitted yet.{% else %}Requests will appear here when they reach the {{ role }} step.{% endif %}</p></article>
     {% endif %}
   </section>
+
+  <!-- Decline Modal -->
+  <div id="decline-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Decline Request</h2>
+        <button class="modal-close" onclick="closeDeclineModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Tracking Number:</strong> <span id="decline-tracking-number"></span></p>
+        <p><strong>Service Type:</strong> <span id="decline-service-type"></span></p>
+        
+        <label for="decline-reason"><strong>Reason for Decline:</strong></label>
+        <select id="decline-reason" name="decline-reason" required>
+          <option value="">Select a reason...</option>
+          <!-- Options will be populated by JavaScript based on service type -->
+        </select>
+        
+        <label for="decline-notes"><strong>Additional Notes (Optional):</strong></label>
+        <textarea id="decline-notes" name="decline-notes" rows="3" placeholder="Any additional details about the decline..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-button" onclick="closeDeclineModal()">Cancel</button>
+        <button class="decline-confirm-button" onclick="confirmDecline()">Decline Request</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
+<style>
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1a1a1a;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body p {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-body label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-body select,
+.modal-body textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.modal-body textarea {
+  resize: vertical;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+}
+
+.decline-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.decline-button:hover {
+  background-color: #c82333;
+}
+
+.decline-confirm-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.decline-confirm-button:hover {
+  background-color: #c82333;
+}
+
+.secondary-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.secondary-button:hover {
+  background-color: #5a6268;
+}
+</style>
+
 {% if role == 'Secretary' %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -89,4 +260,132 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endif %}
+
+<script>
+// Decline reasons for each service type
+const declineReasons = {
+  barangay_clearance: [
+    'Applicant is not a resident of Barangay 7',
+    'Incomplete or invalid documentation',
+    'Unable to verify identity',
+    'Applicant has pending barangay issues',
+    'Request does not meet clearance requirements',
+    'Other'
+  ],
+  barangay_certification: [
+    'Applicant is not a resident of Barangay 7',
+    'Incomplete or invalid documentation',
+    'Unable to verify identity',
+    'Purpose does not match certification requirements',
+    'Request lacks sufficient supporting evidence',
+    'Other'
+  ],
+  certificate_of_residency: [
+    'Applicant is not a resident of Barangay 7',
+    'Residency period insufficient for certification',
+    'Unable to verify residency duration',
+    'Incomplete or invalid documentation',
+    'Address verification failed',
+    'Other'
+  ],
+  certificate_of_indigency: [
+    'Applicant is not a resident of Barangay 7',
+    'Financial information cannot be verified',
+    'Income exceeds indigency threshold',
+    'Incomplete or invalid documentation',
+    'Family size information inconsistent',
+    'Other'
+  ],
+  business_closure: [
+    'Business is not registered in Barangay 7',
+    'Business cannot be verified as active',
+    'Incomplete business documentation',
+    'Owner identity cannot be verified',
+    'Closure reason requires additional documentation',
+    'Other'
+  ],
+  first_time_job_seeker: [
+    'Applicant is not a resident of Barangay 7',
+    'Cannot verify first-time job seeker status',
+    'Incomplete or invalid documentation',
+    'Applicant has previous employment records',
+    'Oath of undertaking information inconsistent',
+    'Other'
+  ]
+};
+
+let currentDeclineReference = '';
+
+function openDeclineModal(referenceNumber, serviceType) {
+  currentDeclineReference = referenceNumber;
+  
+  // Set modal content
+  document.getElementById('decline-tracking-number').textContent = referenceNumber;
+  
+  // Format service type for display
+  const formattedServiceType = serviceType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  document.getElementById('decline-service-type').textContent = formattedServiceType;
+  
+  // Populate decline reasons dropdown
+  const reasonSelect = document.getElementById('decline-reason');
+  reasonSelect.innerHTML = '<option value="">Select a reason...</option>';
+  
+  const reasons = declineReasons[serviceType] || declineReasons.barangay_clearance;
+  reasons.forEach(reason => {
+    const option = document.createElement('option');
+    option.value = reason;
+    option.textContent = reason;
+    reasonSelect.appendChild(option);
+  });
+  
+  // Clear notes
+  document.getElementById('decline-notes').value = '';
+  
+  // Show modal
+  document.getElementById('decline-modal').style.display = 'block';
+}
+
+function closeDeclineModal() {
+  document.getElementById('decline-modal').style.display = 'none';
+  currentDeclineReference = '';
+}
+
+function confirmDecline() {
+  const reason = document.getElementById('decline-reason').value;
+  const notes = document.getElementById('decline-notes').value;
+  
+  if (!reason) {
+    alert('Please select a reason for decline');
+    return;
+  }
+  
+  // Submit decline request
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/dashboard/requests/${currentDeclineReference}/decline`;
+  
+  const reasonInput = document.createElement('input');
+  reasonInput.type = 'hidden';
+  reasonInput.name = 'decline_reason';
+  reasonInput.value = reason;
+  
+  const notesInput = document.createElement('input');
+  notesInput.type = 'hidden';
+  notesInput.name = 'decline_notes';
+  notesInput.value = notes;
+  
+  form.appendChild(reasonInput);
+  form.appendChild(notesInput);
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('decline-modal');
+  if (event.target == modal) {
+    closeDeclineModal();
+  }
+}
+</script>
 {% endblock %}
