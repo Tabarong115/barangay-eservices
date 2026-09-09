@@ -25,10 +25,271 @@
     <a class="primary-button" href="{{ url_for('track_request', reference_number=clearance_request['reference_number']) }}">Track this request</a>
     <a class="text-link" href="{{ url_for('public_portal') }}">Return to public portal</a>
   </section>
+
+  <!-- Tracking Number Save Modal -->
+  <div id="tracking-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔔 Save Your Tracking Number</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Important:</strong> Please save your tracking number now. You will need it to check your request status and for any inquiries.</p>
+        <div class="tracking-highlight">
+          <p class="modal-tracking-number" id="modal-tracking-number">{{ clearance_request.reference_number }}</p>
+        </div>
+        <p class="modal-instructions">Click the "Save" button below to:</p>
+        <ul class="modal-instructions-list">
+          <li>✅ Copy tracking number to clipboard</li>
+          <li>✅ Download tracking number as JPG image</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-button" onclick="closeModal()">I'll Save It Later</button>
+        <button class="primary-button" onclick="saveTrackingNumber()">Save</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
+<style>
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1a1a1a;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body p {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.tracking-highlight {
+  background-color: #f8f9fa;
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.modal-tracking-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #007bff;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.modal-instructions {
+  font-weight: 600;
+  color: #555;
+  margin-top: 20px;
+}
+
+.modal-instructions-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 20px 0;
+}
+
+.modal-instructions-list li {
+  padding: 8px 0;
+  color: #333;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.secondary-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.secondary-button:hover {
+  background-color: #5a6268;
+}
+</style>
+
 <script>
+// Show modal when page loads
+window.onload = function() {
+  document.getElementById('tracking-modal').style.display = 'block';
+};
+
+function closeModal() {
+  document.getElementById('tracking-modal').style.display = 'none';
+}
+
+function saveTrackingNumber() {
+  const trackingNumber = document.getElementById('modal-tracking-number').textContent.trim();
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(trackingNumber).then(() => {
+    console.log('Tracking number copied to clipboard');
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = trackingNumber;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  });
+  
+  // Download JPG
+  downloadTrackingJPG(trackingNumber);
+  
+  // Close modal
+  closeModal();
+}
+
+function downloadTrackingJPG(trackingNumber) {
+  const applicantName = "{{ clearance_request.full_name if clearance_request.full_name else clearance_request.owner_name }}";
+  const serviceType = "{{ clearance_request.service_type if clearance_request.service_type else 'Barangay Clearance' }}";
+  const currentDate = new Date().toLocaleDateString('en-PH', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  // Format service type for display
+  const formattedServiceType = serviceType
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  
+  // Create canvas for JPG generation
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Set canvas size
+  canvas.width = 600;
+  canvas.height = 400;
+  
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Border
+  ctx.strokeStyle = '#007bff';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+  
+  // Header
+  ctx.fillStyle = '#007bff';
+  ctx.fillRect(10, 10, canvas.width - 20, 60);
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('BARANGAY 7 E-SERVICES', canvas.width / 2, 50);
+  
+  // Title
+  ctx.fillStyle = '#333333';
+  ctx.font = 'bold 20px Arial';
+  ctx.fillText('TRACKING NUMBER', canvas.width / 2, 100);
+  
+  // Tracking number (highlighted)
+  ctx.fillStyle = '#f8f9fa';
+  ctx.fillRect(50, 120, canvas.width - 100, 60);
+  ctx.strokeStyle = '#007bff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(50, 120, canvas.width - 100, 60);
+  
+  ctx.fillStyle = '#007bff';
+  ctx.font = 'bold 28px Arial';
+  ctx.fillText(trackingNumber, canvas.width / 2, 160);
+  
+  // Details
+  ctx.fillStyle = '#333333';
+  ctx.font = '16px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Applicant: ${applicantName}`, 50, 220);
+  ctx.fillText(`Certificate Type: ${formattedServiceType}`, 50, 250);
+  ctx.fillText(`Date: ${currentDate}`, 50, 280);
+  
+  // Footer note
+  ctx.fillStyle = '#666666';
+  ctx.font = 'italic 14px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Keep this tracking number safe for tracking your request', canvas.width / 2, 350);
+  
+  // Convert to JPG and download
+  canvas.toBlob(function(blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tracking_${trackingNumber}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 'image/jpeg', 0.9);
+}
+
 function downloadVoucher() {
   const trackingNumber = document.getElementById('tracking-number').textContent.trim();
   const applicantName = "{{ clearance_request.full_name if clearance_request.full_name else clearance_request.owner_name }}";
