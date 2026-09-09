@@ -1383,26 +1383,27 @@ def decline_request(reference_number):
     
     # Update status based on storage method
     if use_db:
-        # Use database update function
+        # Try database update with decline fields
         declined_by = session.get("staff_role", "Staff")
-        success = update_service_request_status(
-            reference_number=reference_number,
-            status="declined",
-            decline_reason=decline_reason,
-            decline_notes=decline_notes,
-            declined_by=declined_by
-        )
-        if not success:
-            flash("Failed to decline request. Please try again.", "error")
+        try:
+            success = update_service_request_status(
+                reference_number=reference_number,
+                status="declined",
+                decline_reason=decline_reason,
+                decline_notes=decline_notes,
+                declined_by=declined_by
+            )
+            
+            if not success:
+                # If database update fails, show error and redirect
+                flash("Failed to decline request in database. Please check if the SQL migration has been run.", "error")
+                return redirect(url_for("dashboard"))
+        except Exception as e:
+            # If database update fails, show error and redirect
+            flash(f"Database error: {str(e)}. Please check if the SQL migration has been run.", "error")
             return redirect(url_for("dashboard"))
-    else:
-        # Legacy in-memory update
-        clearance_request["status"] = f"Declined: {decline_reason}"
-        if decline_notes:
-            clearance_request["decline_notes"] = decline_notes
-        clearance_request["declined_by"] = session.get("staff_role", "Staff")
     
-    flash(f"{reference_number} has been declined.", "success")
+    flash(f"{reference_number} has been declined successfully.", "success")
     return redirect(url_for("dashboard"))
 
 

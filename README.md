@@ -15,7 +15,9 @@ The app is now production-ready and fully operational with the following capabil
   - First Time Job Seeker Certification
 - Online request submission with required personal details, selfie capture, and optional ID photo upload
 - **Enhanced tracking system:**
-  - Forced tracking number retention with copy-to-clipboard functionality
+  - **Automatic tracking number dialogue box** that pops up upon request submission
+  - **One-click save functionality** that copies tracking number to clipboard and downloads JPG image
+  - **Tracking number JPG download** with certificate type, applicant name, and important details
   - Downloadable voucher containing tracking number and request details
   - Secretary dashboard with full visibility of all requests to assist citizens who forgot tracking numbers
   - Search functionality for Secretary to quickly find requests by name, tracking number, or contact
@@ -152,7 +154,12 @@ Open http://127.0.0.1:5000/dashboard to sign in.
 The app is production-ready and fully operational on Render with enhanced features for citizen tracking and staff efficiency.
 
 ### Recent improvements
+- **Automatic tracking number dialogue box:** Pop up upon request submission with one-click save functionality
+- **One-click tracking number save:** Automatically copies to clipboard and downloads JPG image with certificate details
 - **Enhanced tracking workflow:** Citizens can copy or download their tracking numbers as vouchers to prevent loss
+- **Request decline functionality:** Staff can decline requests with service-specific reasons and optional notes
+- **Declined request visibility:** Clients see detailed decline reasons and notes in their tracking page
+- **Updated processing times:** Citizens' Charter now reflects realistic 2-3 minute approval times (reduced from 1-2 hours)
 - **Secretary dashboard enhancement:** Secretary can view all requests and search by name/tracking number to assist citizens
 - **Request sorting optimization:** Latest requests now appear at the top of the dashboard for improved workflow efficiency
 - **Fixed file upload functionality:** Logo and signature uploads now work correctly in both local and production environments
@@ -166,7 +173,7 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **Enhanced verification security:** Certificate verification page now includes verification timestamp, record ID, and additional security information
 - **Certificate spacing fixes:** Adjusted First Time Job Seeker certificate spacing to prevent text overlap with signature areas
 - **Signature positioning:** Optimized digital signature positions with proper font hierarchy for professional appearance
-- **Citizens' Charter page:** Added ARTA-compliant Citizens' Charter with complete service specifications, procedures, fees, and processing times
+- **Citizens' Charter page:** Added ARTA-compliant Citizens' Charter with complete service specifications, procedures, fees, and updated processing times
 - **Contact information management:** Added phone, email, and Facebook contact details management via Settings page
 - **Treasurer settings enhancement:** Added Treasurer signature upload and name management for complete staff information
 - **GCash QR code integration:** Added GCash QR code upload feature for payment processing, displayed in payment form
@@ -188,16 +195,18 @@ While the app is production-ready for public use, the following security enhance
 ### For Citizens
 - Easy online service request submission
 - Selfie capture for identity verification
-- Forced tracking number retention (copy or download voucher)
-- Real-time request status tracking
+- **Automatic tracking number dialogue box** upon submission with one-click save
+- **One-click tracking number save** (copy to clipboard + download JPG with details)
+- Real-time request status tracking including decline reasons
 - Downloadable PDF certificates upon approval
-- **Citizens' Charter access** with complete service information, fees, and processing times
+- **Citizens' Charter access** with complete service information, fees, and updated processing times
 - **GCash QR code display** for convenient payment processing
 - Contact information access (phone, email, Facebook)
 
 ### For Staff
 - Role-based dashboard (Secretary, Treasurer, Punong Barangay)
 - Secretary can view all requests and search to assist citizens
+- **Request decline functionality** with service-specific reasons and optional notes
 - **Latest-first request sorting** for improved workflow efficiency
 - Photo verification for ID and selfie uploads
 - Payment proof review and verification
@@ -262,6 +271,75 @@ Certificates now follow professional signature formatting:
 ### Certificate content fixes
 - **Purpose field display:** Fixed missing purpose display in Certificate of Indigency and Certificate of Residency
 - **Residency duration:** Fixed years/months display in Certificate of Residency
+
+## Request Decline System
+
+The app includes a comprehensive request decline system that allows staff to reject ineligible or incomplete requests with clear explanations.
+
+### Decline Features
+- **Service-specific decline reasons** tailored to each certificate type (residency issues, documentation problems, eligibility concerns, etc.)
+- **Optional decline notes** for additional context or explanations
+- **Staff role tracking** (who declined the request - Secretary, Treasurer, or Punong Barangay)
+- **Client visibility** - declined requests show detailed reasons and notes in the tracking page
+- **Professional decline display** with clear formatting and guidance for citizens
+
+### Decline Reasons by Service Type
+- **Barangay Clearance:** Not a resident, incomplete documentation, identity verification, pending barangay issues, etc.
+- **Barangay Certification:** Not a resident, incomplete documentation, purpose mismatch, insufficient evidence, etc.
+- **Certificate of Residency:** Not a resident, insufficient residency period, address verification failed, etc.
+- **Certificate of Indigency:** Not a resident, financial verification failed, income exceeds threshold, etc.
+- **Business Closure:** Business not registered, cannot verify active business, incomplete documentation, etc.
+- **First Time Job Seeker:** Not a resident, cannot verify first-time status, previous employment records, etc.
+
+### Decline Workflow
+1. Staff clicks "Decline" button on any request they have access to
+2. Modal appears with service-specific decline reasons dropdown
+3. Staff selects primary reason and optionally adds notes
+4. Request status changes to "Declined: [Reason]"
+5. Client sees full decline details when tracking their request
+6. Guidance provided for citizens to contact barangay if they believe it's an error
+
+### Database Requirements
+The decline feature requires the `add_decline_fields_migration.sql` to be run in Supabase to add:
+- `decline_reason` field for storing the primary decline reason
+- `decline_notes` field for additional context
+- `declined_by` field to track which staff role declined the request
+- Updated `valid_status` constraint to include "declined" as a valid status
+
+## Tracking Number Retention System
+
+The app includes an automatic tracking number retention system to prevent citizens from losing their tracking numbers.
+
+### Automatic Dialogue Box
+- **Pop-up upon submission** - Automatically appears when citizens submit a request
+- **Clear instructions** - Tells citizens to save their tracking number immediately
+- **Prominent display** - Shows tracking number in large, highlighted format
+- **One-click save** - Single button to save tracking number multiple ways
+
+### One-Click Save Functionality
+When citizens click "Save":
+1. **Automatically copies** tracking number to clipboard
+2. **Downloads JPG image** containing:
+   - Tracking number (large and prominent)
+   - Certificate type
+   - Applicant name
+   - Submission date
+   - Barangay branding
+   - Instructions to keep the number safe
+
+### JPG Download Features
+- **Professional design** with barangay branding and colors
+- **Client-side generation** using HTML5 Canvas (no server load)
+- **Automatic filename** based on tracking number
+- **High quality** JPEG format suitable for printing or saving
+- **Mobile-friendly** works on all devices
+
+### Benefits
+- **Prevents tracking number loss** - Citizens have multiple ways to save it
+- **Reduces support requests** - Fewer citizens forget their tracking numbers
+- **User-friendly** - One-click solution instead of manual copying
+- **Professional appearance** - Branded JPG image looks official
+- **Cross-platform** - Works on desktop, tablet, and mobile devices
 
 ## Settings Management
 
@@ -356,6 +434,27 @@ This architecture allows you to:
 - **Color scheme refinement** using professional grays and navy tones
 - **Consistent design** across all six certificate types while maintaining official appearance
 
+### Tracking number retention system (September 2026)
+- **Automatic dialogue box** that pops up upon request submission with tracking number
+- **One-click save functionality** that copies tracking number to clipboard and downloads JPG image
+- **Professional JPG generation** with certificate type, applicant name, and submission date
+- **Client-side canvas generation** for fast performance without server load
+- **Cross-platform compatibility** works on desktop, tablet, and mobile devices
+
+### Request decline system (September 2026)
+- **Service-specific decline reasons** tailored to each certificate type
+- **Decline modal with dropdown** for selecting specific reasons
+- **Optional decline notes** for additional context and explanations
+- **Staff role tracking** to identify who declined each request
+- **Client visibility** of decline reasons and notes in tracking page
+- **Database migration** to add decline fields and update status constraints
+
+### Citizens' Charter processing time updates (September 2026)
+- **Realistic approval times** updated from 1-2 hours to 2-3 minutes for Punong Barangay approval
+- **Total processing time** reduced to 15-20 minutes for paid services, 10-15 minutes for free services
+- **Efficient workflow** reflecting modern e-services processing capabilities
+- **Better citizen expectations** with accurate timeline estimates
+
 ## Project structure
 
 ```text
@@ -372,6 +471,8 @@ barangay-eservices/
 ├── .env.example                    # Environment variables template
 ├── setup_supabase_policies.sql     # Supabase database setup
 ├── add_official_names_migration.sql # SQL migration for official names feature
+├── add_contact_info_migration.sql   # SQL migration for contact info and Treasurer settings
+├── add_decline_fields_migration.sql # SQL migration for decline functionality
 ├── pilot_settings.json             # Local settings (logo/signature paths/names)
 ├── templates/                      # Jinja2 HTML templates
 │   ├── base.html                   # Base template
