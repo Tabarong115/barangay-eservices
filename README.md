@@ -35,6 +35,8 @@ The app is now production-ready and fully operational with the following capabil
 - Enhanced certificate content with proper purpose display and residency duration information
 - QR code verification for certificate authenticity checking
 - **GCash QR code display** in payment form for easier payment processing
+- **Legal compliance footer** with RA 8792 and A.M. No. 01-7-01-SC recognition text on all certificates
+- **Philippine timezone support** for accurate verification timestamps (Asia/Manila, UTC+8)
 
 The current workflow is:
 1. Citizen submits a service request and receives tracking number with download option
@@ -166,6 +168,8 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **GCash QR code integration:** Added GCash QR code upload feature for payment processing, displayed in payment form
 - **Production storage optimization:** Implemented Supabase-first storage with temporary file cleanup for Render deployment
 - **Navigation improvements:** Simplified navigation text and added Citizens' Charter access
+- **Legal compliance footer:** Added RA 8792 and A.M. No. 01-7-01-SC recognition text to all certificates for electronic document validity
+- **Philippine timezone support:** Updated verification timestamps to use Asia/Manila timezone (UTC+8) for accurate time display
 
 ### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
@@ -233,6 +237,8 @@ The app generates professional A4-size PDF certificates for all services with en
 - **Better logo placement** with larger, better positioned logos or enhanced default seal
 - **Professional footer** with improved signature sections and spacing
 - **Color scheme refinement** using professional grays and navy tones
+- **Legal compliance footer** with RA 8792 and A.M. No. 01-7-01-SC recognition text for electronic document validity
+- **QR code positioning** optimized to avoid overlap with footer text
 
 ### Certificate types
 - **Barangay Clearance** - General purpose clearance certificate
@@ -283,6 +289,7 @@ The Settings page provides comprehensive management of barangay branding and ope
 - **Verification system:** Scanning the QR code redirects to a verification page showing certificate details
 - **Security features:** Enhanced verification page includes timestamp, record ID, and additional security information to prevent forgery
 - **Configuration:** QR code URLs use the BASE_URL environment variable for proper domain configuration
+- **Philippine timezone:** Verification timestamps use Asia/Manila timezone (UTC+8) for accurate time display
 
 ## Production deployment
 
@@ -324,6 +331,12 @@ This architecture allows you to:
 
 ## Recent fixes and improvements
 
+### Certificate legal compliance (September 2026)
+- **Legal compliance footer:** Added RA 8792 and A.M. No. 01-7-01-SC recognition text to all certificates for electronic document validity
+- **QR code positioning:** Optimized QR code placement to avoid overlap with footer text
+- **Philippine timezone:** Updated verification timestamps to use Asia/Manila timezone (UTC+8) for accurate time display
+- **Small font footer:** Legal compliance text displayed in small font (6.3pt) at bottom of certificates
+
 ### Certificate content fixes (August 2026)
 - **Fixed purpose field display:** Certificate of Indigency and Certificate of Residency now properly display the user-specified purpose instead of showing blank or default text
 - **Fixed residency duration:** Certificate of Residency now correctly shows the number of years and months of residence as entered by the user
@@ -332,7 +345,7 @@ This architecture allows you to:
 
 ### Certificate design enhancements (August 2026)
 - **Professional double-border design** with navy outer border and gold inner accent
-- **Subtle watermark background** for added depth and professionalism  
+- **Subtle watermark background** for added depth and professionalism
 - **Enhanced typography** with improved font sizes, spacing, and hierarchy
 - **Better logo placement** with larger, better positioned logos or enhanced default seal
 - **Professional footer** with improved signature sections and spacing
@@ -384,7 +397,14 @@ barangay-eservices/
 
 ## Recent updates
 
-### Version 1.2 (Current - August 2026)
+### Version 1.3 (Current - September 2026)
+- Added legal compliance footer with RA 8792 and A.M. No. 01-7-01-SC recognition text on all certificates
+- Optimized QR code positioning to avoid overlap with footer text
+- Updated verification timestamps to use Philippine timezone (Asia/Manila, UTC+8)
+- Legal compliance text displayed in small font (6.3pt) at bottom of certificates
+- Enhanced certificate footer design for better readability
+
+### Version 1.2 (August 2026)
 - Added official names feature for Punong Barangay and Secretary in Settings page
 - Enhanced certificate verification page with security information (timestamp, record ID)
 - Fixed First Time Job Seeker certificate spacing to prevent text overlap
