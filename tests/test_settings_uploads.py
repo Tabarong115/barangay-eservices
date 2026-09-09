@@ -86,6 +86,16 @@ class SettingsUploadTests(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(fake_client.table_instance.payload["barangay_logo_filename"], "logo.png")
 
+    def test_public_qr_route_is_accessible_without_staff_login(self):
+        client = app_module.app.test_client()
+
+        with patch.object(app_module, "load_pilot_settings", return_value={"gcash_qr_filename": "qr.png"}), \
+             patch.object(app_module, "send_from_directory", return_value="ok"):
+            response = client.get("/public-qr/qr.png")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b"ok")
+
 
 if __name__ == "__main__":
     unittest.main()

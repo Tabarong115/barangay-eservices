@@ -6,7 +6,7 @@
     <div class="payment-details">
       {% if settings.gcash_qr_filename %}
         <div class="qr-image">
-          <img src="{{ url_for('pilot_id_photo', filename=settings.gcash_qr_filename) }}" alt="GCash QR Code">
+          <img src="{{ url_for('public_qr', filename=settings.gcash_qr_filename) }}" alt="GCash QR Code">
           <small>Scan to pay via GCash</small>
         </div>
       {% else %}

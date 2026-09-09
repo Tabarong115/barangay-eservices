@@ -230,6 +230,8 @@ def delete_pilot_file(filename):
     """Remove a previously saved pilot asset file if it exists."""
     if not filename:
         return
+    if filename.startswith("http://") or filename.startswith("https://"):
+        return
     path = UPLOAD_DIRECTORY / filename
     if path.exists():
         path.unlink()
@@ -1102,6 +1104,8 @@ def pilot_id_photo(filename):
         settings.get("barangay_logo_filename", ""),
         settings.get("punong_barangay_signature_filename", ""),
         settings.get("secretary_signature_filename", ""),
+        settings.get("treasurer_signature_filename", ""),
+        settings.get("gcash_qr_filename", ""),
     }
     uploaded_files = {item for item in uploaded_files if item}
     if filename not in uploaded_files:
@@ -1120,6 +1124,21 @@ def public_logo(filename):
     allowed_logos = {settings.get("barangay_logo_filename", "")}
     allowed_logos = {item for item in allowed_logos if item}
     if filename not in allowed_logos:
+        abort(404)
+    return send_from_directory(UPLOAD_DIRECTORY, filename)
+
+
+@app.get("/public-qr/<path:filename>")
+def public_qr(filename):
+    """Serve the GCash QR image publicly for the payment page."""
+    # If filename is a URL (from Supabase), redirect to it
+    if filename.startswith("http://") or filename.startswith("https://"):
+        return redirect(filename)
+
+    settings = load_pilot_settings()
+    allowed_qr = {settings.get("gcash_qr_filename", "")}
+    allowed_qr = {item for item in allowed_qr if item}
+    if filename not in allowed_qr:
         abort(404)
     return send_from_directory(UPLOAD_DIRECTORY, filename)
 
