@@ -446,8 +446,16 @@ def generate_business_closure_certification(request_data, output_path):
         except:
             pass
     
+    reason = request_data.get("reason", request_data.get("closure_reason", ""))
+    
     template_data = dict(request_data)
     template_data["closure_date"] = closure_date
+    template_data["reason"] = reason
+    template_data["business_name"] = request_data.get("business_name", request_data.get("full_name", "Unknown Business"))
+    template_data["business_address"] = request_data.get("business_address", request_data.get("address", "Unknown Address"))
+    template_data["business_type"] = request_data.get("business_type", "Unknown Type")
+    template_data["owner_name"] = request_data.get("owner_name", request_data.get("full_name", "Unknown Owner"))
+    
     text = ("This is to certify that the business known as <b>{business_name}</b>, located at <b>{business_address}</b>, "
             "operated as a <b>{business_type}</b> under the ownership of <b>{owner_name}</b>, "
             "has officially closed its operations effective <b>{closure_date}</b>. "

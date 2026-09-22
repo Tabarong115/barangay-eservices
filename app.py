@@ -810,12 +810,17 @@ def business_closure():
                 selfie_photo_filename=selfie_photo_filename,
                 business_name=business_name,
                 business_address=business_address,
+                business_type=business_type,
+                owner_name=owner_name,
+                closure_date=closure_date,
                 closure_reason=detailed_reason
             )
             
             business_closure_request = {
                 "reference_number": reference_number,
                 "service_type": "business_closure",
+                "full_name": owner_name,  # For consistency with other certificates
+                "address": business_address,  # For consistency with other certificates
                 "business_name": business_name,
                 "business_address": business_address,
                 "business_type": business_type,
@@ -841,6 +846,8 @@ def business_closure():
             business_closure_request = {
                 "reference_number": reference_number,
                 "service_type": "business_closure",
+                "full_name": owner_name,  # For consistency with other certificates
+                "address": business_address,  # For consistency with other certificates
                 "business_name": business_name,
                 "business_address": business_address,
                 "business_type": business_type,

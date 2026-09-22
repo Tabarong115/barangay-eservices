@@ -110,6 +110,9 @@ def create_service_request(
                 "service_request_id": service_request_id,
                 "business_name": service_specific_fields.get("business_name", ""),
                 "business_address": service_specific_fields.get("business_address", ""),
+                "business_type": service_specific_fields.get("business_type", ""),
+                "owner_name": service_specific_fields.get("owner_name", ""),
+                "closure_date": service_specific_fields.get("closure_date", ""),
                 "closure_reason": service_specific_fields.get("closure_reason", "")
             }).execute()
         elif service_type == "first_time_job_seeker":
