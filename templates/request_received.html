@@ -16,7 +16,7 @@
     </div>
     <div class="confirmation-box">
       <p><strong>Applicant:</strong> {{ clearance_request.full_name if clearance_request.full_name else clearance_request.owner_name }}</p>
-      <p><strong>Birthday / Civil status:</strong> {{ clearance_request.birthday if clearance_request.birthday else 'N/A' }} · {{ clearance_request.civil_status if clearance_request.civil_status else 'N/A' }}</p>
+      <p><strong>Birthday / Civil status:</strong> {% if clearance_request.birthday and clearance_request.birthday != '1900-01-01' %}{{ clearance_request.birthday }}{% else %}N/A{% endif %} · {% if clearance_request.civil_status and clearance_request.civil_status != 'N/A' %}{{ clearance_request.civil_status }}{% else %}N/A{% endif %}</p>
       <p><strong>Purpose:</strong> {{ clearance_request.purpose if clearance_request.purpose else clearance_request.reason if clearance_request.reason else 'N/A' }}</p>
       <p><strong>ID photo:</strong> {{ 'Received' if clearance_request.id_photo_filename else 'Not provided' }}</p>
       <p><strong>Status:</strong> {{ clearance_request.status }}</p>

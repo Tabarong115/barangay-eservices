@@ -1589,8 +1589,8 @@ def advance_request(reference_number):
                 generator_func(certificate_data, temp_certificate_path)
             except Exception as error:
                 print(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
-                flash("Certificate could not be generated. The request remains awaiting approval; please contact the Barangay Secretary.", "error")
-                # Clean up temp directory
+                flash("Certificate could not be generated. Please check that all required settings (logo, signatures) are configured in Settings.", "error")
+                # Clean up temp directory on error
                 try:
                     shutil.rmtree(temp_dir)
                 except:
@@ -1600,20 +1600,30 @@ def advance_request(reference_number):
             storage_path = f"{datetime.now():%Y}/{certificate_filename}"
             uploaded_certificate_path = upload_certificate_to_supabase_storage(temp_certificate_path, storage_path)
             
-            # Clean up temporary directory after upload attempt
+            if not uploaded_certificate_path:
+                flash("Certificate could not be saved to storage. Please check your storage configuration.", "error")
+                # Clean up temp directory on error
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
+                return redirect(url_for("dashboard"))
+            if not update_certificate_info(reference_number, certificate_number, uploaded_certificate_path):
+                flash("Certificate details could not be saved to database.", "error")
+                # Clean up temp directory on error
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
+                return redirect(url_for("dashboard"))
+            
+            # Clean up temp directory after successful operations
             try:
                 shutil.rmtree(temp_dir)
             except Exception as cleanup_error:
                 print(f"[WARNING] Failed to clean up temporary directory: {cleanup_error}")
-            
-            if not uploaded_certificate_path:
-                flash("Certificate could not be saved to Supabase Storage. The request remains awaiting approval.", "error")
-                return redirect(url_for("dashboard"))
-            if not update_certificate_info(reference_number, certificate_number, uploaded_certificate_path):
-                flash("Certificate details could not be saved. The request remains awaiting approval.", "error")
-                return redirect(url_for("dashboard"))
         if not update_service_request_status(reference_number, db_next_status):
-            flash("Request status could not be saved. Please try again.", "error")
+            flash("Request status could not be updated in database. The certificate was generated but status update failed. Please contact technical support.", "error")
             return redirect(url_for("dashboard"))
     else:
         # Legacy in-memory update
@@ -1660,12 +1670,19 @@ def advance_request(reference_number):
                 shutil.copy2(temp_certificate_path, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
             except Exception as error:
                 print(f"[ERROR] Local certificate generation failed: {error}")
-            finally:
+                flash("Certificate could not be generated. Please check that all required settings (logo, signatures) are configured in Settings.", "error")
                 # Clean up temp directory
                 try:
                     shutil.rmtree(temp_dir)
                 except:
                     pass
+                return redirect(url_for("dashboard"))
+            
+            # Clean up temp directory after successful generation
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
     
     flash(f"{reference_number} was forwarded successfully.", "success")
     return redirect(url_for("dashboard"))

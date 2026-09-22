@@ -36,7 +36,7 @@
             <div>
               <p class="eyebrow">{{ item.reference_number }}</p>
               <h3>{{ item.full_name if item.full_name else item.owner_name }}</h3>
-              <p>{{ item.purpose if item.purpose else item.reason }} · Born {{ item.birthday if item.birthday else 'N/A' }} · {{ item.civil_status if item.civil_status else 'N/A' }}</p>
+              <p>{{ item.purpose if item.purpose else item.reason }} · Born {% if item.birthday and item.birthday != '1900-01-01' %}{{ item.birthday }}{% else %}N/A{% endif %} · {% if item.civil_status and item.civil_status != 'N/A' %}{{ item.civil_status }}{% else %}N/A{% endif %}</p>
               <div class="photo-verification">
                 {% if item.id_photo_filename %}<a class="id-photo-link" href="{{ url_for('pilot_id_photo', filename=item.id_photo_filename) }}" target="_blank">View ID photo</a>{% else %}<p class="muted">No ID photo</p>{% endif %}
                 {% if item.selfie_photo_filename %}<a class="id-photo-link" href="{{ url_for('pilot_id_photo', filename=item.selfie_photo_filename) }}" target="_blank">View selfie</a>{% else %}<p class="muted">No selfie</p>{% endif %}
