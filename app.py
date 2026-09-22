@@ -792,9 +792,6 @@ def business_closure():
         
         # Create database record if connected
         if is_supabase_connected():
-            # Include additional details in closure reason for now
-            detailed_reason = f"{reason} (Business Type: {business_type}, Closure Date: {closure_date})"
-            
             db_request = create_service_request(
                 service_type="business_closure",
                 reference_number=reference_number,
@@ -813,7 +810,7 @@ def business_closure():
                 business_type=business_type,
                 owner_name=owner_name,
                 closure_date=closure_date,
-                closure_reason=detailed_reason
+                closure_reason=reason
             )
             
             business_closure_request = {
