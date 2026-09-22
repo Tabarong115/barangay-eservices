@@ -438,6 +438,7 @@ def generate_business_closure_certification(request_data, output_path):
     y = PAGE_HEIGHT - 133 * mm
     y = _paragraph(pdf, "<b>TO WHOM IT MAY CONCERN:</b>", margin, y, content_width, heading) - 6 * mm
     
+    # Extract closure date and format it
     closure_date = request_data.get("closure_date", "")
     if closure_date:
         try:
@@ -446,14 +447,43 @@ def generate_business_closure_certification(request_data, output_path):
         except:
             pass
     
+    # Extract reason and handle old embedded format
     reason = request_data.get("reason", request_data.get("closure_reason", ""))
     
+    # Handle old format where business details were embedded in reason
+    # Old format: "reason (Business Type: X, Closure Date: Y)"
+    if "(Business Type:" in reason and "Closure Date:" in reason:
+        import re
+        # Extract the clean reason (before the embedded details)
+        clean_reason = re.sub(r'\s*\(Business Type:.*?\)', '', reason).strip()
+        # Extract business type from embedded format
+        business_type_match = re.search(r'Business Type:\s*([^,]+)', reason)
+        if business_type_match:
+            business_type = business_type_match.group(1).strip()
+        else:
+            business_type = request_data.get("business_type", "Unknown Type")
+        # Extract closure date from embedded format
+        closure_date_match = re.search(r'Closure Date:\s*([^)]+)', reason)
+        if closure_date_match:
+            closure_date = closure_date_match.group(1).strip()
+            # Try to format the extracted date
+            try:
+                from datetime import datetime
+                closure_date = datetime.strptime(closure_date, "%Y-%m-%d").strftime("%B %d, %Y")
+            except:
+                pass
+        reason = clean_reason
+    else:
+        # Use new format with separate fields
+        business_type = request_data.get("business_type", "Unknown Type")
+    
+    # Build template data with fallbacks
     template_data = dict(request_data)
     template_data["closure_date"] = closure_date
     template_data["reason"] = reason
     template_data["business_name"] = request_data.get("business_name", request_data.get("full_name", "Unknown Business"))
     template_data["business_address"] = request_data.get("business_address", request_data.get("address", "Unknown Address"))
-    template_data["business_type"] = request_data.get("business_type", "Unknown Type")
+    template_data["business_type"] = business_type
     template_data["owner_name"] = request_data.get("owner_name", request_data.get("full_name", "Unknown Owner"))
     
     text = ("This is to certify that the business known as <b>{business_name}</b>, located at <b>{business_address}</b>, "
