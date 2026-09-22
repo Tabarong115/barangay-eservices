@@ -364,6 +364,7 @@ def barangay_clearance():
             
             clearance_request = {
                 "reference_number": reference_number,
+                "service_type": "barangay_clearance",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -388,6 +389,7 @@ def barangay_clearance():
             print(f"[DEBUG] Using in-memory storage (Supabase not connected)")
             clearance_request = {
                 "reference_number": reference_number,
+                "service_type": "barangay_clearance",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -471,6 +473,7 @@ def barangay_certification():
             
             certification_request = {
                 "reference_number": reference_number,
+                "service_type": "barangay_certification",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -494,6 +497,7 @@ def barangay_certification():
             # Fallback to in-memory storage
             certification_request = {
                 "reference_number": reference_number,
+                "service_type": "barangay_certification",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -579,6 +583,7 @@ def certificate_of_residency():
             
             residency_request = {
                 "reference_number": reference_number,
+                "service_type": "certificate_of_residency",
                 "full_name": full_name,
                 "address": address,
                 "years_resided": residency_years,
@@ -604,6 +609,7 @@ def certificate_of_residency():
             # Fallback to in-memory storage
             residency_request = {
                 "reference_number": reference_number,
+                "service_type": "certificate_of_residency",
                 "full_name": full_name,
                 "address": address,
                 "years_resided": residency_years,
@@ -692,6 +698,7 @@ def certificate_of_indigency():
             
             indigency_request = {
                 "reference_number": reference_number,
+                "service_type": "certificate_of_indigency",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -717,6 +724,7 @@ def certificate_of_indigency():
             # Fallback to in-memory storage
             indigency_request = {
                 "reference_number": reference_number,
+                "service_type": "certificate_of_indigency",
                 "full_name": full_name,
                 "address": address,
                 "purpose": purpose,
@@ -807,6 +815,7 @@ def business_closure():
             
             business_closure_request = {
                 "reference_number": reference_number,
+                "service_type": "business_closure",
                 "business_name": business_name,
                 "business_address": business_address,
                 "business_type": business_type,
@@ -831,6 +840,7 @@ def business_closure():
             # Fallback to in-memory storage
             business_closure_request = {
                 "reference_number": reference_number,
+                "service_type": "business_closure",
                 "business_name": business_name,
                 "business_address": business_address,
                 "business_type": business_type,
@@ -914,6 +924,7 @@ def first_time_job_seeker():
             
             job_seeker_request = {
                 "reference_number": reference_number,
+                "service_type": "first_time_job_seeker",
                 "full_name": full_name,
                 "address": address,
                 "contact_number": contact_number,
@@ -937,6 +948,7 @@ def first_time_job_seeker():
             # Fallback to in-memory storage
             job_seeker_request = {
                 "reference_number": reference_number,
+                "service_type": "first_time_job_seeker",
                 "full_name": full_name,
                 "address": address,
                 "contact_number": contact_number,
