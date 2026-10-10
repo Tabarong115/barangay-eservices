@@ -16,6 +16,7 @@
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
     <form class="request-form" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <h2>Submit payment proof</h2>
       <label for="payment_reference">GCash reference number</label><input id="payment_reference" name="payment_reference" required placeholder="Reference shown in your GCash receipt">
       <label for="payment_proof">Payment screenshot</label><input id="payment_proof" name="payment_proof" type="file" accept="image/jpeg,image/png" required>

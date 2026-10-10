@@ -20,6 +20,10 @@ class Config:
     CERTIFICATE_STORAGE_BUCKET = os.getenv("CERTIFICATE_STORAGE_BUCKET", "certificates")
     REQUIRE_SUPABASE = os.getenv("REQUIRE_SUPABASE", "false").lower() == "true"
 
+    # CSRF Protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_TIME_LIMIT = None  # No time limit for session-based CSRF
+
     # Local pilot accounts only. Replace these with Supabase Authentication
     # before the portal is used with real citizen records.
     PILOT_SECRETARY_USERNAME = os.getenv("PILOT_SECRETARY_USERNAME", "secretary")

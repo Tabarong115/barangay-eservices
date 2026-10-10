@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from functools import wraps
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_file, send_from_directory, session, url_for
+from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -50,6 +51,9 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config.from_object(Config())
+
+# Enable CSRF protection
+csrf = CSRFProtect(app)
 
 print("[DEBUG] Supabase init status:", get_supabase_debug_status())
 

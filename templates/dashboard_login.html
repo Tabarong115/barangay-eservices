@@ -9,6 +9,7 @@
       {% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}
     {% endwith %}
     <form class="request-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label for="username">Username</label>
       <input id="username" name="username" required autocomplete="username">
       <label for="password">Password</label>

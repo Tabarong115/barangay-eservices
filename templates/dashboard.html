@@ -49,6 +49,7 @@
               {% if role != 'Secretary' or item.status == 'Pending Secretary Review' %}
                 <div class="action-buttons">
                   <form method="post" action="{{ url_for('advance_request', reference_number=item.reference_number) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="primary-button" type="submit">
                       {% if role == 'Secretary' %}
                         {% if is_free %}Approve & forward{% else %}Request GCash payment{% endif %}
@@ -363,17 +364,23 @@ function confirmDecline() {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = `/dashboard/requests/${currentDeclineReference}/decline`;
-  
+
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'csrf_token';
+  csrfInput.value = '{{ csrf_token() }}';
+
   const reasonInput = document.createElement('input');
   reasonInput.type = 'hidden';
   reasonInput.name = 'decline_reason';
   reasonInput.value = reason;
-  
+
   const notesInput = document.createElement('input');
   notesInput.type = 'hidden';
   notesInput.name = 'decline_notes';
   notesInput.value = notes;
-  
+
+  form.appendChild(csrfInput);
   form.appendChild(reasonInput);
   form.appendChild(notesInput);
   document.body.appendChild(form);

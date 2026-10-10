@@ -19,6 +19,7 @@
       {% endfor %}
     {% endwith %}
     <form class="request-form" method="post" enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <h2>Business information</h2>
       <p class="muted">All fields are required unless marked optional.</p>
       <label for="business_name">Business name</label>
