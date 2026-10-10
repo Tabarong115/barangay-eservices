@@ -1,11 +1,177 @@
+# Python
 .venv/
+venv/
+ENV/
+env/
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables (SENSITIVE - NEVER COMMIT)
 .env
-.packages/
+.env.local
+.env.*.local
+*.env
+secrets.json
+credentials.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Flask/Server
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Uploads and generated files (should be in Supabase Storage)
 uploads/*
 !uploads/.gitkeep
+pdf/
+pdf/generated/*
 qr/*
 !qr/.gitkeep
 static/images/*
 !static/images/.gitkeep
+pilot_settings.json
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Packages
+.packages/
+*.tar.gz
+*.zip
+
+# Cache
+.cache/
+*.cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+tmp_check.py
+files_py.txt
+test_supabase.py
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Lock files (optional - commit if needed for reproducibility)
+# package-lock.json
+# poetry.lock

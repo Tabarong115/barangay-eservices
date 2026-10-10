@@ -34,6 +34,8 @@ from database import (
     get_public_url_from_supabase_storage,
     upload_certificate_to_supabase_storage,
     download_certificate_from_supabase_storage,
+    verify_staff_user,
+    initialize_default_staff_users,
 )
 from certificate_generator import (
     generate_barangay_clearance,
@@ -53,6 +55,10 @@ print("[DEBUG] Supabase init status:", get_supabase_debug_status())
 
 if app.config["REQUIRE_SUPABASE"] and not is_supabase_connected():
     raise RuntimeError("Supabase is required in this environment but could not be initialized.")
+
+# Initialize default staff users with hashed passwords on startup
+if is_supabase_connected():
+    initialize_default_staff_users()
 
 UPLOAD_DIRECTORY = Path(app.root_path) / "uploads"
 UPLOAD_DIRECTORY.mkdir(exist_ok=True)
@@ -98,7 +104,9 @@ JOB_SEEKER_REQUESTS = []
 
 
 def pilot_users():
-    """Return the three approved local-pilot staff accounts."""
+    """Return the three approved local-pilot staff accounts (DEPRECATED - use database authentication)."""
+    # This function is kept for backward compatibility with in-memory fallback
+    # In production, authentication uses Supabase with bcrypt password hashing
     return {
         app.config["PILOT_SECRETARY_USERNAME"]: {"password": app.config["PILOT_SECRETARY_PASSWORD"], "role": "Secretary"},
         app.config["PILOT_TREASURER_USERNAME"]: {"password": app.config["PILOT_TREASURER_PASSWORD"], "role": "Treasurer"},
@@ -1315,19 +1323,32 @@ def download_certificate(reference_number):
 
 @app.route("/dashboard/login", methods=["GET", "POST"])
 def dashboard_login():
-    """Sign in one of the three staff roles for the local pilot."""
+    """Sign in one of the three staff roles using secure authentication with bcrypt password hashing."""
     if session.get("staff_role"):
         return redirect(url_for("dashboard"))
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        user = pilot_users().get(username)
-        if user and password == user["password"]:
-            session.clear()
-            session["staff_username"] = username
-            session["staff_role"] = user["role"]
-            return redirect(url_for("dashboard"))
-        flash("Incorrect username or password.", "error")
+
+        # Try Supabase authentication first (production)
+        if is_supabase_connected():
+            user = verify_staff_user(username, password)
+            if user:
+                session.clear()
+                session["staff_username"] = username
+                session["staff_role"] = user["role"]
+                session["staff_id"] = user.get("id")
+                return redirect(url_for("dashboard"))
+            flash("Incorrect username or password.", "error")
+        else:
+            # Fallback to in-memory authentication (development only)
+            user = pilot_users().get(username)
+            if user and password == user["password"]:
+                session.clear()
+                session["staff_username"] = username
+                session["staff_role"] = user["role"]
+                return redirect(url_for("dashboard"))
+            flash("Incorrect username or password.", "error")
     return render_template("dashboard_login.html")
 
 

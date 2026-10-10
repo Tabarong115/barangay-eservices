@@ -512,9 +512,146 @@ def get_public_url_from_supabase_storage(bucket_name: str, file_path: str) -> Op
     """Get the public URL for a file in Supabase Storage."""
     if not is_supabase_connected():
         return None
-    
+
     try:
         return supabase.storage.from_(bucket_name).get_public_url(file_path)
     except Exception as e:
         print(f"Error getting public URL from Supabase Storage: {e}")
         return None
+
+
+def get_staff_user(username: str) -> Optional[Dict[str, Any]]:
+    """Get a staff user by username."""
+    if not is_supabase_connected():
+        return None
+
+    try:
+        result = supabase.table("staff_users").select("*").eq("username", username).limit(1).execute()
+        if result.data:
+            return result.data[0]
+        return None
+    except Exception as e:
+        print(f"Error getting staff user: {e}")
+        return None
+
+
+def verify_staff_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+    """Verify staff user credentials using bcrypt password verification."""
+    import bcrypt
+
+    user = get_staff_user(username)
+    if not user:
+        return None
+
+    # Check if user is active
+    if not user.get("is_active", True):
+        return None
+
+    # Verify password hash
+    password_hash = user.get("password_hash", "")
+    if not password_hash or password_hash.startswith("$2b$12$PLACEHOLDER"):
+        # Placeholder hash - return None to force initialization
+        return None
+
+    try:
+        if bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
+            return user
+    except Exception as e:
+        print(f"Error verifying password: {e}")
+
+    return None
+
+
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt."""
+    import bcrypt
+
+    # Generate salt and hash password
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
+
+
+def create_staff_user(username: str, password: str, role: str) -> bool:
+    """Create a new staff user with hashed password."""
+    if not is_supabase_connected():
+        return False
+
+    try:
+        password_hash = hash_password(password)
+        supabase.table("staff_users").insert({
+            "username": username,
+            "password_hash": password_hash,
+            "role": role,
+            "is_active": True
+        }).execute()
+        return True
+    except Exception as e:
+        print(f"Error creating staff user: {e}")
+        return False
+
+
+def update_staff_user_password(username: str, new_password: str) -> bool:
+    """Update a staff user's password with a new hashed password."""
+    if not is_supabase_connected():
+        return False
+
+    try:
+        password_hash = hash_password(new_password)
+        supabase.table("staff_users").update({
+            "password_hash": password_hash,
+            "updated_at": "NOW()"
+        }).eq("username", username).execute()
+        return True
+    except Exception as e:
+        print(f"Error updating staff user password: {e}")
+        return False
+
+
+def initialize_default_staff_users() -> bool:
+    """Initialize default staff users with hashed passwords if they don't exist or have placeholder hashes."""
+    if not is_supabase_connected():
+        return False
+
+    try:
+        from config import Config
+        config = Config()
+
+        # Get default credentials from config
+        defaults = [
+            {
+                "username": config.PILOT_SECRETARY_USERNAME,
+                "password": config.PILOT_SECRETARY_PASSWORD,
+                "role": "Secretary"
+            },
+            {
+                "username": config.PILOT_TREASURER_USERNAME,
+                "password": config.PILOT_TREASURER_PASSWORD,
+                "role": "Treasurer"
+            },
+            {
+                "username": config.PILOT_CHAIRMAN_USERNAME,
+                "password": config.PILOT_CHAIRMAN_PASSWORD,
+                "role": "Punong Barangay"
+            }
+        ]
+
+        for user_data in defaults:
+            username = user_data["username"]
+            existing_user = get_staff_user(username)
+
+            if existing_user:
+                # Check if it has a placeholder hash
+                if existing_user.get("password_hash", "").startswith("$2b$12$PLACEHOLDER"):
+                    # Update with real hash
+                    update_staff_user_password(username, user_data["password"])
+                    print(f"[INFO] Updated password hash for {username}")
+            else:
+                # Create new user
+                create_staff_user(username, user_data["password"], user_data["role"])
+                print(f"[INFO] Created staff user {username}")
+
+        return True
+    except Exception as e:
+        print(f"Error initializing default staff users: {e}")
+        return False

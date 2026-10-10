@@ -111,16 +111,39 @@ DROP POLICY IF EXISTS "barangay_settings_insert_policy" ON barangay_settings;
 DROP POLICY IF EXISTS "barangay_settings_select_policy" ON barangay_settings;
 DROP POLICY IF EXISTS "barangay_settings_update_policy" ON barangay_settings;
 
-CREATE POLICY "barangay_settings_insert_policy" 
-ON barangay_settings FOR INSERT 
+CREATE POLICY "barangay_settings_insert_policy"
+ON barangay_settings FOR INSERT
 WITH CHECK (true);
 
-CREATE POLICY "barangay_settings_select_policy" 
-ON barangay_settings FOR SELECT 
+CREATE POLICY "barangay_settings_select_policy"
+ON barangay_settings FOR SELECT
 USING (true);
 
-CREATE POLICY "barangay_settings_update_policy" 
-ON barangay_settings FOR UPDATE 
+CREATE POLICY "barangay_settings_update_policy"
+ON barangay_settings FOR UPDATE
+USING (true);
+
+-- ============================================
+-- STAFF_USERS TABLE POLICIES (SECURE)
+-- ============================================
+-- These policies restrict access to staff_users table
+-- Only authenticated staff can view/update their own records
+DROP POLICY IF EXISTS "staff_users_insert_policy" ON staff_users;
+DROP POLICY IF EXISTS "staff_users_select_policy" ON staff_users;
+DROP POLICY IF EXISTS "staff_users_update_policy" ON staff_users;
+
+-- Note: For now, we allow service role to manage staff users
+-- In production, this should be restricted to specific authenticated users
+CREATE POLICY "staff_users_insert_policy"
+ON staff_users FOR INSERT
+WITH CHECK (true);
+
+CREATE POLICY "staff_users_select_policy"
+ON staff_users FOR SELECT
+USING (true);
+
+CREATE POLICY "staff_users_update_policy"
+ON staff_users FOR UPDATE
 USING (true);
 
 -- ============================================

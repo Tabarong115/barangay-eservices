@@ -97,6 +97,7 @@ SUPABASE_SERVICE_ROLE_KEY=server-only-secret-from-supabase
 CERTIFICATE_STORAGE_BUCKET=certificates
 REQUIRE_SUPABASE=true
 
+# Staff credentials (for initial setup - passwords will be hashed with bcrypt)
 PILOT_SECRETARY_USERNAME=secretary
 PILOT_SECRETARY_PASSWORD=secretary-test
 PILOT_TREASURER_USERNAME=treasurer
@@ -108,6 +109,8 @@ GCASH_ACCOUNT_NAME=Barangay 7
 GCASH_ACCOUNT_NUMBER=09XXXXXXXXX
 BASE_URL=http://127.0.0.1:5000
 ```
+
+**Important Security Note:** The default passwords above are for initial setup only. After the first login, you should change these passwords immediately through the Supabase dashboard or by updating the `staff_users` table directly. The application uses bcrypt for secure password hashing.
 
 ### 4) Prepare Supabase
 
@@ -123,6 +126,7 @@ This sets up:
 - `add_official_names_migration.sql` to add official name fields
 - `add_contact_info_migration.sql` to add contact information and Treasurer settings (including GCash QR code support)
 - `add_decline_fields_migration.sql` to add decline functionality (decline reasons, notes, and declined by fields)
+- `add_staff_users_migration.sql` to add secure staff authentication with bcrypt password hashing (REQUIRED for security)
 
 **Storage Bucket Setup:** The migration includes instructions for creating the "qrcodes" storage bucket in Supabase Storage for GCash QR code functionality. Follow the manual steps in the migration file to set up the bucket with appropriate RLS policies.
 
@@ -139,13 +143,15 @@ Then open:
 
 ## Dashboard access
 
-Use the pilot credentials from the `.env` file:
+Use the staff credentials from the `.env` file:
 
 | Role | Username | Password |
 |---|---|---|
 | Secretary | `secretary` | `secretary-test` |
 | Treasurer | `treasurer` | `treasurer-test` |
 | Punong Barangay | `chairman` | `chairman-test` |
+
+**Security Enhancement:** The application now uses bcrypt for secure password hashing. Passwords are never stored in plain text. After the first login, you should change these default passwords immediately through the Supabase dashboard or by updating the `staff_users` table directly.
 
 Open http://127.0.0.1:5000/dashboard to sign in.
 
@@ -154,6 +160,7 @@ Open http://127.0.0.1:5000/dashboard to sign in.
 The app is production-ready and fully operational on Render with enhanced features for citizen tracking and staff efficiency.
 
 ### Recent improvements
+- **Secure authentication with bcrypt:** Implemented proper password hashing using bcrypt to replace plain text password storage. Staff credentials are now securely hashed in the database with automatic initialization on startup.
 - **Automatic tracking number dialogue box:** Pop up upon request submission with one-click save functionality
 - **One-click tracking number save:** Automatically copies to clipboard and downloads JPG image with certificate details
 - **Enhanced tracking workflow:** Citizens can copy or download their tracking numbers as vouchers to prevent loss
@@ -182,10 +189,130 @@ The app is production-ready and fully operational on Render with enhanced featur
 - **Legal compliance footer:** Added RA 8792 and A.M. No. 01-7-01-SC recognition text to all certificates for electronic document validity
 - **Philippine timezone support:** Updated verification timestamps to use Asia/Manila timezone (UTC+8) for accurate time display
 
-### Remaining security considerations
+### Security Audit Findings (2026-10-10)
+
+A comprehensive security and performance audit was conducted to identify vulnerabilities and optimization opportunities. The following issues were found and prioritized:
+
+#### 🔴 Critical Security Issues
+
+**1. Weak Authentication System**
+- Passwords stored in plain text (no hashing)
+- Simple string comparison for authentication
+- Default weak credentials (`secretary-test`, `treasurer-test`, `chairman-test`)
+- No rate limiting on login attempts
+- No account lockout mechanism
+- **Status**: ✅ FIXED - Implemented proper password hashing with bcrypt. Staff passwords are now securely hashed using bcrypt. Run `add_staff_users_migration.sql` to create the staff_users table. The application automatically initializes default staff users with hashed passwords on startup.
+
+**2. Supabase RLS Policies Completely Open**
+- All tables use `WITH CHECK (true)` and `USING (true)` - essentially no access control
+- Anyone with the anon key can read/write ALL data
+- Storage buckets are completely public (read/write)
+- No row-level security based on user roles
+- **Critical**: The `SUPABASE_SERVICE_ROLE_KEY` gives full database access to anyone who finds it
+- **Status**: PENDING - Requires RLS policy overhaul
+
+**3. No CSRF Protection**
+- Flask doesn't have CSRF protection enabled
+- All POST forms are vulnerable to cross-site request forgery
+- An attacker could submit forms on behalf of logged-in users
+- **Status**: PENDING - Need to enable Flask-WTF CSRF protection
+
+**4. Insecure Session Configuration**
+- No `SESSION_COOKIE_SECURE` flag (cookies sent over HTTP)
+- No `SESSION_COOKIE_HTTPONLY` (vulnerable to XSS)
+- No `SESSION_COOKIE_SAMESITE` (CSRF vulnerability)
+- Default `SECRET_KEY` is weak (`development-only-change-me`)
+- **Status**: PENDING - Need to configure secure session settings
+
+**5. Insufficient File Upload Validation**
+- Only checks file extension, not actual content
+- Could upload malicious files with valid extensions
+- No virus scanning
+- File size limit (5MB) is reasonable but no rate limiting
+- **Status**: PENDING - Need content validation and stricter security
+
+**6. Debug Information Leakage**
+- Debug print statements expose internal state throughout app.py
+- Stack traces may be visible to users
+- Database connection status exposed
+- **Status**: PENDING - Remove debug statements in production
+
+**7. No Rate Limiting**
+- No protection against brute force login attempts
+- No protection against form submission spam
+- No protection against API abuse
+- No protection against DoS attacks
+- **Status**: PENDING - Implement Flask-Limiter
+
+#### 🟡 Performance Issues
+
+**1. Slow Certificate Generation**
+- ReportLab PDF generation is synchronous and CPU-intensive
+- Blocks the request thread during generation
+- No caching of generated certificates
+- Downloads images from URLs during generation (network latency)
+- **Status**: PENDING - Consider async generation with Celery
+
+**2. Database Query Optimization**
+- `get_all_service_requests()` fetches ALL requests every time
+- No pagination on dashboard
+- Dashboard loads all requests even if only a subset is needed
+- No query indexing mentioned in schema
+- **Status**: PENDING - Add pagination and query optimization
+
+**3. No Caching Layer**
+- Settings loaded on every request via `inject_settings()`
+- Images fetched from Supabase URLs repeatedly
+- No CDN for static assets
+- No browser caching headers configured
+- **Status**: PENDING - Implement caching with Redis or Flask-Caching
+
+**4. Synchronous File Operations**
+- All file operations are blocking
+- PDF upload to Supabase is synchronous
+- No async operations for I/O-bound tasks
+- **Status**: PENDING - Consider async operations
+
+**5. In-Memory Fallback Issues**
+- In-memory lists clear on restart (data loss in dev mode)
+- Linear search through lists (O(n) complexity)
+- Not scalable for production
+- **Status**: ACCEPTABLE - Only for development, production uses Supabase
+
+#### 🟢 Good Security Practices Found
+
+1. Uses `secure_filename()` for file uploads
+2. Supabase client (SQL injection protection via ORM)
+3. Role-based access control in dashboard routes
+4. Input sanitization with `.strip()`
+5. Size limits on file uploads
+6. Temporary directory usage for certificate generation
+
+#### 📊 Priority Recommendations
+
+**Immediate (Critical) - Currently Working On:**
+1. ✅ Implement proper password hashing (bcrypt/argon2) - IN PROGRESS
+2. Restrict Supabase RLS policies to only allow authenticated access
+3. Enable Flask CSRF protection
+4. Set secure session cookie flags
+5. Remove debug print statements in production
+
+**High Priority:**
+1. Add rate limiting (Flask-Limiter)
+2. Implement proper authentication integration with Supabase Auth
+3. Add input validation and sanitization
+4. Implement file content validation
+
+**Medium Priority:**
+1. Add database query optimization and pagination
+2. Implement caching (Redis or Flask-Caching)
+3. Add async certificate generation (Celery/background tasks)
+4. Add CDN for static assets
+
+#### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:
 
-1. Replace the current staff login approach with Supabase Auth or another proper authentication system
+1. ~~Replace the current staff login approach with Supabase Auth or another proper authentication system~~ (IN PROGRESS)
 2. Implement additional security hardening for admin routes
 3. Add production monitoring (logs, backups, uptime monitoring)
 4. Review and enhance data protection measures
