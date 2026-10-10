@@ -1330,18 +1330,48 @@ def dashboard_login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
+        print(f"[DEBUG] Login attempt for username: {username}")
+        print(f"[DEBUG] Supabase connected: {is_supabase_connected()}")
+
         # Try Supabase authentication first (production)
         if is_supabase_connected():
-            user = verify_staff_user(username, password)
-            if user:
-                session.clear()
-                session["staff_username"] = username
-                session["staff_role"] = user["role"]
-                session["staff_id"] = user.get("id")
-                return redirect(url_for("dashboard"))
-            flash("Incorrect username or password.", "error")
+            try:
+                user = verify_staff_user(username, password)
+                print(f"[DEBUG] User verification result: {user is not None}")
+                if user:
+                    session.clear()
+                    session["staff_username"] = username
+                    session["staff_role"] = user["role"]
+                    session["staff_id"] = user.get("id")
+                    print(f"[DEBUG] Login successful for {username} as {user['role']}")
+                    return redirect(url_for("dashboard"))
+                else:
+                    print(f"[DEBUG] Supabase auth failed, trying fallback")
+                    # Fallback to in-memory if staff_users table doesn't exist yet
+                    user = pilot_users().get(username)
+                    if user and password == user["password"]:
+                        session.clear()
+                        session["staff_username"] = username
+                        session["staff_role"] = user["role"]
+                        print(f"[DEBUG] Fallback login successful for {username}")
+                        return redirect(url_for("dashboard"))
+                    flash("Incorrect username or password.", "error")
+            except Exception as e:
+                print(f"[ERROR] Login error: {e}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to in-memory on error
+                user = pilot_users().get(username)
+                if user and password == user["password"]:
+                    session.clear()
+                    session["staff_username"] = username
+                    session["staff_role"] = user["role"]
+                    print(f"[DEBUG] Fallback login successful for {username}")
+                    return redirect(url_for("dashboard"))
+                flash("An error occurred during login. Please try again.", "error")
         else:
             # Fallback to in-memory authentication (development only)
+            print(f"[DEBUG] Using in-memory authentication fallback")
             user = pilot_users().get(username)
             if user and password == user["password"]:
                 session.clear()

@@ -532,6 +532,9 @@ def get_staff_user(username: str) -> Optional[Dict[str, Any]]:
         return None
     except Exception as e:
         print(f"Error getting staff user: {e}")
+        # Table might not exist yet
+        if "does not exist" in str(e) or "relation" in str(e).lower():
+            print(f"[WARN] staff_users table does not exist yet")
         return None
 
 
@@ -611,6 +614,7 @@ def update_staff_user_password(username: str, new_password: str) -> bool:
 def initialize_default_staff_users() -> bool:
     """Initialize default staff users with hashed passwords if they don't exist or have placeholder hashes."""
     if not is_supabase_connected():
+        print("[WARN] Supabase not connected, skipping staff user initialization")
         return False
 
     try:
@@ -636,22 +640,40 @@ def initialize_default_staff_users() -> bool:
             }
         ]
 
+        print(f"[INFO] Initializing {len(defaults)} default staff users...")
+
         for user_data in defaults:
             username = user_data["username"]
+            print(f"[INFO] Processing user: {username}")
+
             existing_user = get_staff_user(username)
 
             if existing_user:
                 # Check if it has a placeholder hash
-                if existing_user.get("password_hash", "").startswith("$2b$12$PLACEHOLDER"):
+                password_hash = existing_user.get("password_hash", "")
+                print(f"[INFO] User {username} exists with hash: {password_hash[:20] if password_hash else 'empty'}...")
+                if password_hash.startswith("$2b$12$PLACEHOLDER"):
                     # Update with real hash
-                    update_staff_user_password(username, user_data["password"])
-                    print(f"[INFO] Updated password hash for {username}")
+                    success = update_staff_user_password(username, user_data["password"])
+                    if success:
+                        print(f"[INFO] Updated password hash for {username}")
+                    else:
+                        print(f"[ERROR] Failed to update password hash for {username}")
+                else:
+                    print(f"[INFO] User {username} already has valid hash, skipping")
             else:
                 # Create new user
-                create_staff_user(username, user_data["password"], user_data["role"])
-                print(f"[INFO] Created staff user {username}")
+                print(f"[INFO] Creating new staff user: {username}")
+                success = create_staff_user(username, user_data["password"], user_data["role"])
+                if success:
+                    print(f"[INFO] Created staff user {username}")
+                else:
+                    print(f"[ERROR] Failed to create staff user {username}")
 
+        print("[INFO] Staff user initialization complete")
         return True
     except Exception as e:
-        print(f"Error initializing default staff users: {e}")
+        print(f"[ERROR] Error initializing default staff users: {e}")
+        import traceback
+        traceback.print_exc()
         return False
