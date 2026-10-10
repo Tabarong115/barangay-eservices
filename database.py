@@ -6,6 +6,7 @@ from config import Config
 import base64
 from io import BytesIO
 from pathlib import Path
+import os
 
 try:
     from supabase import create_client, Client
@@ -17,10 +18,18 @@ try:
             supabase = create_client(config.SUPABASE_URL, config.supabase_server_key)
         except Exception as exc:
             supabase = None
-            print(f"Warning: Supabase client initialization failed: {exc}")
+            if os.getenv("FLASK_ENV") != "production":
+                print(f"Warning: Supabase client initialization failed: {exc}")
 except ImportError:
     supabase = None
-    print("Warning: supabase package not installed. Run: pip install supabase")
+    if os.getenv("FLASK_ENV") != "production":
+        print("Warning: supabase package not installed. Run: pip install supabase")
+
+
+def debug_log(*args, **kwargs):
+    """Print debug messages only in development mode."""
+    if os.getenv("FLASK_ENV") != "production":
+        print(*args, **kwargs)
 
 
 def is_supabase_connected() -> bool:
@@ -123,7 +132,7 @@ def create_service_request(
         
         return result.data[0]
     except Exception as e:
-        print(f"Error creating service request: {e}")
+        debug_log(f"Error creating service request: {e}")
         return None
 
 
@@ -156,7 +165,7 @@ def _attach_service_details(service_request: Dict[str, Any]) -> Dict[str, Any]:
             if result.data:
                 enriched_request.update(result.data[0])
         except Exception as exc:
-            print(f"Error loading {details_table}: {exc}")
+            debug_log(f"Error loading {details_table}: {exc}")
 
     # Older Indigency/Residency requests did not yet store their stated purpose.
     # Only set default if purpose field doesn't exist at all (for backward compatibility).
@@ -179,7 +188,7 @@ def get_service_request_by_reference(reference_number: str) -> Optional[Dict[str
             return _attach_service_details(result.data[0])
         return None
     except Exception as e:
-        print(f"Error getting service request: {e}")
+        debug_log(f"Error getting service request: {e}")
         return None
 
 
@@ -195,7 +204,7 @@ def get_all_service_requests(service_type: Optional[str] = None) -> List[Dict[st
         result = query.execute()
         return [_attach_service_details(request) for request in result.data]
     except Exception as e:
-        print(f"Error getting service requests: {e}")
+        debug_log(f"Error getting service requests: {e}")
         return []
 
 
@@ -231,7 +240,7 @@ def update_service_request_status(
         supabase.table("service_requests").update(update_data).eq("reference_number", reference_number).execute()
         return True
     except Exception as e:
-        print(f"Error updating service request status: {e}")
+        debug_log(f"Error updating service request status: {e}")
         return False
 
 
@@ -249,7 +258,7 @@ def update_payment_info(reference_number: str, payment_reference: str, payment_p
         }).eq("reference_number", reference_number).execute()
         return True
     except Exception as e:
-        print(f"Error updating payment info: {e}")
+        debug_log(f"Error updating payment info: {e}")
         return False
 
 
@@ -265,7 +274,7 @@ def update_certificate_info(reference_number: str, certificate_number: str, cert
         }).eq("reference_number", reference_number).execute()
         return True
     except Exception as e:
-        print(f"Error saving certificate information: {e}")
+        debug_log(f"Error saving certificate information: {e}")
         return False
 
 
@@ -316,7 +325,7 @@ def get_barangay_settings() -> Dict[str, str]:
             "contact_facebook": ""
         }
     except Exception as e:
-        print(f"Error getting barangay settings: {e}")
+        debug_log(f"Error getting barangay settings: {e}")
         return {
             "barangay_logo_filename": "",
             "punong_barangay_signature_filename": "",
@@ -396,7 +405,7 @@ def update_barangay_settings(
             }).execute()
             return True
     except Exception as e:
-        print(f"Error updating barangay settings: {e}")
+        debug_log(f"Error updating barangay settings: {e}")
         return False
 
 
@@ -409,7 +418,7 @@ def get_service_requests_by_status(status: str) -> List[Dict[str, Any]]:
         result = supabase.table("service_requests").select("*").eq("status", status).order("created_at", desc=True).execute()
         return result.data
     except Exception as e:
-        print(f"Error getting service requests by status: {e}")
+        debug_log(f"Error getting service requests by status: {e}")
         return []
 
 
@@ -429,7 +438,7 @@ def upload_file_to_supabase_storage(file_data: bytes, bucket_name: str, file_pat
         public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
         return public_url
     except Exception as e:
-        print(f"Error uploading file to Supabase Storage: {e}")
+        debug_log(f"Error uploading file to Supabase Storage: {e}")
         return None
 
 
@@ -452,7 +461,7 @@ def upload_certificate_to_supabase_storage(local_path: Path, storage_path: str) 
         )
         return storage_path
     except Exception as e:
-        print(f"Error uploading certificate PDF: {e}")
+        debug_log(f"Error uploading certificate PDF: {e}")
         return None
 
 
@@ -464,7 +473,7 @@ def download_certificate_from_supabase_storage(storage_path: str) -> Optional[by
     try:
         return supabase.storage.from_(config.CERTIFICATE_STORAGE_BUCKET).download(storage_path)
     except Exception as e:
-        print(f"Error downloading certificate PDF: {e}")
+        debug_log(f"Error downloading certificate PDF: {e}")
         return None
 
 
@@ -491,7 +500,7 @@ def upload_base64_image_to_supabase(base64_string: str, bucket_name: str, file_p
         
         return upload_file_to_supabase_storage(image_data, bucket_name, file_path, content_type)
     except Exception as e:
-        print(f"Error uploading base64 image to Supabase Storage: {e}")
+        debug_log(f"Error uploading base64 image to Supabase Storage: {e}")
         return None
 
 
@@ -504,7 +513,7 @@ def delete_file_from_supabase_storage(bucket_name: str, file_path: str) -> bool:
         supabase.storage.from_(bucket_name).remove([file_path])
         return True
     except Exception as e:
-        print(f"Error deleting file from Supabase Storage: {e}")
+        debug_log(f"Error deleting file from Supabase Storage: {e}")
         return False
 
 
@@ -516,7 +525,7 @@ def get_public_url_from_supabase_storage(bucket_name: str, file_path: str) -> Op
     try:
         return supabase.storage.from_(bucket_name).get_public_url(file_path)
     except Exception as e:
-        print(f"Error getting public URL from Supabase Storage: {e}")
+        debug_log(f"Error getting public URL from Supabase Storage: {e}")
         return None
 
 
@@ -531,10 +540,10 @@ def get_staff_user(username: str) -> Optional[Dict[str, Any]]:
             return result.data[0]
         return None
     except Exception as e:
-        print(f"Error getting staff user: {e}")
+        debug_log(f"Error getting staff user: {e}")
         # Table might not exist yet
         if "does not exist" in str(e) or "relation" in str(e).lower():
-            print(f"[WARN] staff_users table does not exist yet")
+            debug_log(f"[WARN] staff_users table does not exist yet")
         return None
 
 
@@ -560,7 +569,7 @@ def verify_staff_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         if bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
             return user
     except Exception as e:
-        print(f"Error verifying password: {e}")
+        debug_log(f"Error verifying password: {e}")
 
     return None
 
@@ -590,7 +599,7 @@ def create_staff_user(username: str, password: str, role: str) -> bool:
         }).execute()
         return True
     except Exception as e:
-        print(f"Error creating staff user: {e}")
+        debug_log(f"Error creating staff user: {e}")
         return False
 
 
@@ -607,14 +616,14 @@ def update_staff_user_password(username: str, new_password: str) -> bool:
         }).eq("username", username).execute()
         return True
     except Exception as e:
-        print(f"Error updating staff user password: {e}")
+        debug_log(f"Error updating staff user password: {e}")
         return False
 
 
 def initialize_default_staff_users() -> bool:
     """Initialize default staff users with hashed passwords if they don't exist or have placeholder hashes."""
     if not is_supabase_connected():
-        print("[WARN] Supabase not connected, skipping staff user initialization")
+        debug_log("[WARN] Supabase not connected, skipping staff user initialization")
         return False
 
     try:
@@ -640,40 +649,40 @@ def initialize_default_staff_users() -> bool:
             }
         ]
 
-        print(f"[INFO] Initializing {len(defaults)} default staff users...")
+        debug_log(f"[INFO] Initializing {len(defaults)} default staff users...")
 
         for user_data in defaults:
             username = user_data["username"]
-            print(f"[INFO] Processing user: {username}")
+            debug_log(f"[INFO] Processing user: {username}")
 
             existing_user = get_staff_user(username)
 
             if existing_user:
                 # Check if it has a placeholder hash
                 password_hash = existing_user.get("password_hash", "")
-                print(f"[INFO] User {username} exists with hash: {password_hash[:20] if password_hash else 'empty'}...")
+                debug_log(f"[INFO] User {username} exists with hash: {password_hash[:20] if password_hash else 'empty'}...")
                 if password_hash.startswith("$2b$12$PLACEHOLDER"):
                     # Update with real hash
                     success = update_staff_user_password(username, user_data["password"])
                     if success:
-                        print(f"[INFO] Updated password hash for {username}")
+                        debug_log(f"[INFO] Updated password hash for {username}")
                     else:
-                        print(f"[ERROR] Failed to update password hash for {username}")
+                        debug_log(f"[ERROR] Failed to update password hash for {username}")
                 else:
-                    print(f"[INFO] User {username} already has valid hash, skipping")
+                    debug_log(f"[INFO] User {username} already has valid hash, skipping")
             else:
                 # Create new user
-                print(f"[INFO] Creating new staff user: {username}")
+                debug_log(f"[INFO] Creating new staff user: {username}")
                 success = create_staff_user(username, user_data["password"], user_data["role"])
                 if success:
-                    print(f"[INFO] Created staff user {username}")
+                    debug_log(f"[INFO] Created staff user {username}")
                 else:
-                    print(f"[ERROR] Failed to create staff user {username}")
+                    debug_log(f"[ERROR] Failed to create staff user {username}")
 
         print("[INFO] Staff user initialization complete")
         return True
     except Exception as e:
-        print(f"[ERROR] Error initializing default staff users: {e}")
+        debug_log(f"[ERROR] Error initializing default staff users: {e}")
         import traceback
         traceback.print_exc()
         return False

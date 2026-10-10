@@ -55,7 +55,17 @@ app.config.from_object(Config())
 # Enable CSRF protection
 csrf = CSRFProtect(app)
 
-print("[DEBUG] Supabase init status:", get_supabase_debug_status())
+# Helper function for debug logging (only in development)
+def debug_log(*args, **kwargs):
+    """Print debug messages only in development mode."""
+    if app.config.get("FLASK_ENV") != "production":
+        print(*args, **kwargs)
+
+# Warn if using default SECRET_KEY in production
+if app.config.get("FLASK_ENV") == "production" and app.config["SECRET_KEY"] == "development-only-change-me":
+    print("[WARNING] Using default SECRET_KEY in production. Please set a strong SECRET_KEY in environment variables!")
+
+debug_log("[DEBUG] Supabase init status:", get_supabase_debug_status())
 
 if app.config["REQUIRE_SUPABASE"] and not is_supabase_connected():
     raise RuntimeError("Supabase is required in this environment but could not be initialized.")
@@ -277,7 +287,7 @@ def load_pilot_settings():
         try:
             return {**defaults, **json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))}
         except (json.JSONDecodeError, OSError):
-            print("[WARNING] Failed to load local settings file, using defaults")
+            debug_log("[WARNING] Failed to load local settings file, using defaults")
     
     return defaults
 
@@ -300,7 +310,7 @@ def save_pilot_settings(settings):
             contact_facebook=settings.get("contact_facebook", "")
         )
         if not success:
-            print("[WARNING] Failed to sync settings to Supabase")
+            debug_log("[WARNING] Failed to sync settings to Supabase")
         else:
             # Successfully saved to Supabase, no need for local file
             return
@@ -309,7 +319,7 @@ def save_pilot_settings(settings):
     try:
         SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
     except Exception as e:
-        print(f"[WARNING] Failed to save settings to local file: {e}")
+        debug_log(f"[WARNING] Failed to save settings to local file: {e}")
 
 
 @app.get("/")
@@ -356,7 +366,7 @@ def barangay_clearance():
         
         # Create database record if connected
         if is_supabase_connected():
-            print(f"[DEBUG] Attempting to create service request in Supabase: {reference_number}")
+            debug_log(f"[DEBUG] Attempting to create service request in Supabase: {reference_number}")
             db_request = create_service_request(
                 service_type="barangay_clearance",
                 reference_number=reference_number,
@@ -372,7 +382,7 @@ def barangay_clearance():
                 selfie_photo_filename=selfie_photo_filename,
                 purpose=purpose
             )
-            print(f"[DEBUG] Database insert result: {db_request}")
+            debug_log(f"[DEBUG] Database insert result: {db_request}")
             
             clearance_request = {
                 "reference_number": reference_number,
@@ -398,7 +408,7 @@ def barangay_clearance():
             }
         else:
             # Fallback to in-memory storage
-            print(f"[DEBUG] Using in-memory storage (Supabase not connected)")
+            debug_log(f"[DEBUG] Using in-memory storage (Supabase not connected)")
             clearance_request = {
                 "reference_number": reference_number,
                 "service_type": "barangay_clearance",
@@ -422,7 +432,7 @@ def barangay_clearance():
                 "status": "Pending Secretary Review",
             }
             CLEARANCE_REQUESTS.append(clearance_request)
-            print(f"[DEBUG] Added to in-memory storage. Total requests: {len(CLEARANCE_REQUESTS)}")
+            debug_log(f"[DEBUG] Added to in-memory storage. Total requests: {len(CLEARANCE_REQUESTS)}")
         
         return render_template("request_received.html", clearance_request=clearance_request)
 
@@ -1334,30 +1344,30 @@ def dashboard_login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
-        print(f"[DEBUG] Login attempt for username: {username}")
-        print(f"[DEBUG] Supabase connected: {is_supabase_connected()}")
+        debug_log(f"[DEBUG] Login attempt for username: {username}")
+        debug_log(f"[DEBUG] Supabase connected: {is_supabase_connected()}")
 
         # Try Supabase authentication first (production)
         if is_supabase_connected():
             try:
                 user = verify_staff_user(username, password)
-                print(f"[DEBUG] User verification result: {user is not None}")
+                debug_log(f"[DEBUG] User verification result: {user is not None}")
                 if user:
                     session.clear()
                     session["staff_username"] = username
                     session["staff_role"] = user["role"]
                     session["staff_id"] = user.get("id")
-                    print(f"[DEBUG] Login successful for {username} as {user['role']}")
+                    debug_log(f"[DEBUG] Login successful for {username} as {user['role']}")
                     return redirect(url_for("dashboard"))
                 else:
-                    print(f"[DEBUG] Supabase auth failed, trying fallback")
+                    debug_log(f"[DEBUG] Supabase auth failed, trying fallback")
                     # Fallback to in-memory if staff_users table doesn't exist yet
                     user = pilot_users().get(username)
                     if user and password == user["password"]:
                         session.clear()
                         session["staff_username"] = username
                         session["staff_role"] = user["role"]
-                        print(f"[DEBUG] Fallback login successful for {username}")
+                        debug_log(f"[DEBUG] Fallback login successful for {username}")
                         return redirect(url_for("dashboard"))
                     flash("Incorrect username or password.", "error")
             except Exception as e:
@@ -1370,12 +1380,12 @@ def dashboard_login():
                     session.clear()
                     session["staff_username"] = username
                     session["staff_role"] = user["role"]
-                    print(f"[DEBUG] Fallback login successful for {username}")
+                    debug_log(f"[DEBUG] Fallback login successful for {username}")
                     return redirect(url_for("dashboard"))
                 flash("An error occurred during login. Please try again.", "error")
         else:
             # Fallback to in-memory authentication (development only)
-            print(f"[DEBUG] Using in-memory authentication fallback")
+            debug_log(f"[DEBUG] Using in-memory authentication fallback")
             user = pilot_users().get(username)
             if user and password == user["password"]:
                 session.clear()
@@ -1659,7 +1669,7 @@ def advance_request(reference_number):
             try:
                 generator_func(certificate_data, temp_certificate_path, app.config.get("BASE_URL"))
             except Exception as error:
-                print(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
+                debug_log(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
                 flash("Certificate could not be generated. Please check that all required settings (logo, signatures) are configured in Settings.", "error")
                 # Clean up temp directory on error
                 try:
@@ -1692,7 +1702,7 @@ def advance_request(reference_number):
             try:
                 shutil.rmtree(temp_dir)
             except Exception as cleanup_error:
-                print(f"[WARNING] Failed to clean up temporary directory: {cleanup_error}")
+                debug_log(f"[WARNING] Failed to clean up temporary directory: {cleanup_error}")
         if not update_service_request_status(reference_number, db_next_status):
             flash("Request status could not be updated in database. The certificate was generated but status update failed. Please contact technical support.", "error")
             return redirect(url_for("dashboard"))
@@ -1740,7 +1750,7 @@ def advance_request(reference_number):
                 CERTIFICATE_DIRECTORY.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(temp_certificate_path, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
             except Exception as error:
-                print(f"[ERROR] Local certificate generation failed: {error}")
+                debug_log(f"[ERROR] Local certificate generation failed: {error}")
                 flash("Certificate could not be generated. Please check that all required settings (logo, signatures) are configured in Settings.", "error")
                 # Clean up temp directory
                 try:

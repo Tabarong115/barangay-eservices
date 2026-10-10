@@ -167,6 +167,9 @@ Open http://127.0.0.1:5000/dashboard to sign in.
 The app is production-ready and fully operational on Render with enhanced features for citizen tracking and staff efficiency.
 
 ### Recent improvements
+- **Debug statement removal:** Implemented debug_log() helper function that only prints in development mode. All debug print statements in app.py and database.py now use this helper and are automatically disabled in production when FLASK_ENV=production. This prevents information disclosure to users while maintaining debugging capabilities during development.
+- **Secure session cookies:** Configured secure session cookie settings for production. Enabled HTTPS-only cookies, HTTPOnly for XSS protection, and SameSite for CSRF protection. Added warning for default SECRET_KEY in production. Render automatically generates a strong SECRET_KEY.
+- **QR code URL fix:** Fixed certificate QR code generation to use production URL instead of localhost. Updated render.yaml to include BASE_URL environment variable for correct QR code verification links. Modified certificate generator functions to accept base_url parameter for flexibility.
 - **CSRF protection implementation:** Added Flask-WTF CSRF protection to all 24 POST forms across the application. This prevents cross-site request forgery attacks while being transparent to legitimate users. All forms now include automatic CSRF tokens.
 - **Secure authentication with bcrypt:** Implemented proper password hashing using bcrypt to replace plain text password storage. Staff credentials are now securely hashed in the database with automatic initialization on startup. Passwords are never stored in plain text.
 - **Enhanced authentication debugging:** Added comprehensive logging for authentication flow to help diagnose login issues. Includes fallback to in-memory authentication for development and error scenarios.
@@ -244,7 +247,12 @@ A comprehensive security and performance audit was conducted to identify vulnera
 - No `SESSION_COOKIE_HTTPONLY` (vulnerable to XSS)
 - No `SESSION_COOKIE_SAMESITE` (CSRF vulnerability)
 - Default `SECRET_KEY` is weak (`development-only-change-me`)
-- **Status**: PENDING - Need to configure secure session settings
+- **Status**: ✅ FIXED - Configured secure session cookies:
+  - `SESSION_COOKIE_SECURE = True` in production (HTTPS only)
+  - `SESSION_COOKIE_HTTPONLY = True` (prevents XSS access to cookies)
+  - `SESSION_COOKIE_SAMESITE = 'Lax'` (CSRF protection)
+  - Added warning for default SECRET_KEY in production
+  - Note: Set a strong SECRET_KEY in Render environment variables for production.
 
 **5. Insufficient File Upload Validation**
 - Only checks file extension, not actual content
@@ -253,13 +261,7 @@ A comprehensive security and performance audit was conducted to identify vulnera
 - File size limit (5MB) is reasonable but no rate limiting
 - **Status**: PENDING - Need content validation and stricter security
 
-**6. Debug Information Leakage**
-- Debug print statements expose internal state throughout app.py
-- Stack traces may be visible to users
-- Database connection status exposed
-- **Status**: PENDING - Remove debug statements in production
-
-**7. No Rate Limiting**
+**6. No Rate Limiting**
 - No protection against brute force login attempts
 - No protection against form submission spam
 - No protection against API abuse
@@ -312,14 +314,12 @@ A comprehensive security and performance audit was conducted to identify vulnera
 
 #### 📊 Priority Recommendations
 
-**Immediate (Critical) - Completed:**
+**Immediate (Critical) - All Completed:**
 1. ✅ Implement proper password hashing (bcrypt/argon2) - COMPLETED
 2. ✅ Restrict Supabase RLS policies to only allow authenticated access - COMPLETED
-
-**Immediate (Critical) - Remaining:**
-3. Enable Flask CSRF protection
-4. Set secure session cookie flags
-5. Remove debug print statements in production
+3. ✅ Enable Flask CSRF protection - COMPLETED
+4. ✅ Set secure session cookie flags - COMPLETED
+5. ✅ Remove debug print statements in production - COMPLETED
 
 **High Priority:**
 1. Add rate limiting (Flask-Limiter)

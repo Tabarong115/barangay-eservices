@@ -24,6 +24,16 @@ class Config:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = None  # No time limit for session-based CSRF
 
+    # Secure Session Cookies
+    # Enable secure cookies in production (HTTPS only)
+    SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV", "development") == "production"
+    # Prevent JavaScript access to cookies (XSS protection)
+    SESSION_COOKIE_HTTPONLY = True
+    # CSRF protection for cookies
+    SESSION_COOKIE_SAMESITE = "Lax"
+    # Session lifetime (24 hours)
+    PERMANENT_SESSION_LIFETIME = 86400
+
     # Local pilot accounts only. Replace these with Supabase Authentication
     # before the portal is used with real citizen records.
     PILOT_SECRETARY_USERNAME = os.getenv("PILOT_SECRETARY_USERNAME", "secretary")
