@@ -167,6 +167,7 @@ Open http://127.0.0.1:5000/dashboard to sign in.
 The app is production-ready and fully operational on Render with enhanced features for citizen tracking and staff efficiency.
 
 ### Recent improvements
+- **Secretary dashboard pagination:** Implemented client-side pagination for the Secretary dashboard with configurable page sizes (20, 50, 100 requests per page). Added status and service type filters for efficient request management. Includes showing X of Y filtered requests, previous/next navigation, and clear filters functionality. Significantly improves dashboard performance as request count grows.
 - **Debug statement removal:** Implemented debug_log() helper function that only prints in development mode. All debug print statements in app.py and database.py now use this helper and are automatically disabled in production when FLASK_ENV=production. This prevents information disclosure to users while maintaining debugging capabilities during development.
 - **Secure session cookies:** Configured secure session cookie settings for production. Enabled HTTPS-only cookies, HTTPOnly for XSS protection, and SameSite for CSRF protection. Added warning for default SECRET_KEY in production. Render automatically generates a strong SECRET_KEY.
 - **QR code URL fix:** Fixed certificate QR code generation to use production URL instead of localhost. Updated render.yaml to include BASE_URL environment variable for correct QR code verification links. Modified certificate generator functions to accept base_url parameter for flexibility.
@@ -328,10 +329,16 @@ A comprehensive security and performance audit was conducted to identify vulnera
 4. Implement file content validation
 
 **Medium Priority:**
-1. Add database query optimization and pagination
+1. ✅ Add database query optimization and pagination - COMPLETED (Secretary dashboard pagination)
 2. Implement caching (Redis or Flask-Caching)
 3. Add async certificate generation (Celery/background tasks)
 4. Add CDN for static assets
+
+**Future Enhancements:**
+1. Automatic request expiration - Implement a scheduled task to automatically delete approved/declined requests older than a configurable time period (e.g., 90 days) to maintain database hygiene and comply with data retention policies
+2. Implement Celery background tasks for certificate generation to prevent blocking user requests
+3. Add email notifications for citizens when their request status changes
+4. Implement audit logging for all staff actions for accountability
 
 #### Remaining security considerations
 While the app is production-ready for public use, the following security enhancements are recommended for long-term production:

@@ -26,13 +26,42 @@
     {% if role == 'Secretary' %}
     <div class="search-section">
       <input type="text" id="searchInput" placeholder="Search by name, tracking number, or contact..." class="search-input">
+      <div class="filter-section">
+        <select id="statusFilter" class="filter-select">
+          <option value="">All Statuses</option>
+          <option value="Pending Secretary Review">Pending Secretary Review</option>
+          <option value="Awaiting Payment">Awaiting Payment</option>
+          <option value="Pending Treasurer Review">Pending Treasurer Review</option>
+          <option value="Pending Chairman Review">Pending Chairman Review</option>
+          <option value="Approved">Approved</option>
+          <option value="Declined">Declined</option>
+        </select>
+        <select id="serviceFilter" class="filter-select">
+          <option value="">All Services</option>
+          <option value="barangay_clearance">Barangay Clearance</option>
+          <option value="barangay_certification">Barangay Certification</option>
+          <option value="certificate_of_residency">Certificate of Residency</option>
+          <option value="certificate_of_indigency">Certificate of Indigency</option>
+          <option value="business_closure">Business Closure</option>
+          <option value="first_time_job_seeker">First Time Job Seeker</option>
+        </select>
+        <button id="clearFilters" class="secondary-button">Clear Filters</button>
+      </div>
     </div>
     {% endif %}
     {% if requests %}
       <section class="request-list" aria-label="{% if role == 'Secretary' %}All requests{% else %}Requests requiring action{% endif %}">
-        <h2>{% if role == 'Secretary' %}All requests{% else %}Requests requiring your action{% endif %}</h2>
-        {% for item in requests %}
-          <article class="request-card">
+        <div class="request-list-header">
+          <h2>{% if role == 'Secretary' %}All requests{% else %}Requests requiring your action{% endif %}</h2>
+          {% if role == 'Secretary' %}
+          <div class="pagination-info">
+            <span id="showingInfo">Showing all {{ requests|length }} requests</span>
+          </div>
+          {% endif %}
+        </div>
+        <div id="requestCardsContainer">
+          {% for item in requests %}
+          <article class="request-card" data-status="{{ item.status }}" data-service="{{ item.service_type }}" data-name="{{ item.full_name if item.full_name else item.owner_name }}" data-reference="{{ item.reference_number }}">
             <div>
               <p class="eyebrow">{{ item.reference_number }}</p>
               <h3>{{ item.full_name if item.full_name else item.owner_name }}</h3>
@@ -63,7 +92,20 @@
               {% endif %}
             </div>
           </article>
-        {% endfor %}
+          {% endfor %}
+        </div>
+        {% if role == 'Secretary' %}
+        <div class="pagination-controls">
+          <button id="prevPage" class="secondary-button" disabled>Previous</button>
+          <span id="pageInfo">Page 1 of 1</span>
+          <button id="nextPage" class="secondary-button" disabled>Next</button>
+          <select id="pageSize" class="filter-select">
+            <option value="20">20 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+          </select>
+        </div>
+        {% endif %}
       </section>
     {% else %}
       <article class="empty-state"><h2>No requests found</h2><p>{% if role == 'Secretary' %}No requests have been submitted yet.{% else %}Requests will appear here when they reach the {{ role }} step.{% endif %}</p></article>
@@ -238,26 +280,155 @@
 .secondary-button:hover {
   background-color: #5a6268;
 }
+
+.filter-section {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+.filter-select:hover {
+  border-color: #999;
+}
+
+.request-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#pageInfo {
+  font-size: 0.9rem;
+  color: #666;
+}
 </style>
 
 {% if role == 'Secretary' %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const serviceFilter = document.getElementById('serviceFilter');
+  const clearFiltersBtn = document.getElementById('clearFilters');
   const requestCards = document.querySelectorAll('.request-card');
-  
-  searchInput.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    
-    requestCards.forEach(card => {
+  const showingInfo = document.getElementById('showingInfo');
+  const prevPageBtn = document.getElementById('prevPage');
+  const nextPageBtn = document.getElementById('nextPage');
+  const pageInfo = document.getElementById('pageInfo');
+  const pageSizeSelect = document.getElementById('pageSize');
+
+  let currentPage = 1;
+  let pageSize = 20;
+  let filteredCards = Array.from(requestCards);
+
+  function applyFilters() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const statusValue = statusFilter.value;
+    const serviceValue = serviceFilter.value;
+
+    filteredCards = Array.from(requestCards).filter(card => {
       const text = card.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
+      const cardStatus = card.dataset.status;
+      const cardService = card.dataset.service;
+
+      const matchesSearch = text.includes(searchTerm);
+      const matchesStatus = !statusValue || cardStatus === statusValue;
+      const matchesService = !serviceValue || cardService === serviceValue;
+
+      return matchesSearch && matchesStatus && matchesService;
+    });
+
+    currentPage = 1;
+    updatePagination();
+  }
+
+  function updatePagination() {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+
+    requestCards.forEach(card => {
+      card.style.display = 'none';
+    });
+
+    filteredCards.forEach((card, index) => {
+      if (index >= startIndex && index < endIndex) {
         card.style.display = 'flex';
-      } else {
-        card.style.display = 'none';
       }
     });
+
+    const totalPages = Math.ceil(filteredCards.length / pageSize) || 1;
+    const showingCount = filteredCards.slice(startIndex, endIndex).length;
+
+    showingInfo.textContent = `Showing ${showingCount} of ${filteredCards.length} filtered requests`;
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    prevPageBtn.disabled = currentPage === 1;
+    nextPageBtn.disabled = currentPage === totalPages;
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  statusFilter.addEventListener('change', applyFilters);
+  serviceFilter.addEventListener('change', applyFilters);
+
+  clearFiltersBtn.addEventListener('click', function() {
+    searchInput.value = '';
+    statusFilter.value = '';
+    serviceFilter.value = '';
+    applyFilters();
   });
+
+  prevPageBtn.addEventListener('click', function() {
+    if (currentPage > 1) {
+      currentPage--;
+      updatePagination();
+    }
+  });
+
+  nextPageBtn.addEventListener('click', function() {
+    const totalPages = Math.ceil(filteredCards.length / pageSize);
+    if (currentPage < totalPages) {
+      currentPage++;
+      updatePagination();
+    }
+  });
+
+  pageSizeSelect.addEventListener('change', function() {
+    pageSize = parseInt(this.value);
+    currentPage = 1;
+    updatePagination();
+  });
+
+  // Initial pagination
+  updatePagination();
 });
 </script>
 {% endif %}
