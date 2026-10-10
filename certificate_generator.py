@@ -46,18 +46,20 @@ def _load_image(image_source):
     return None
 
 
-def _generate_qr_code(certificate_number, tracking_number=None):
+def _generate_qr_code(certificate_number, tracking_number=None, base_url=None):
     """Generate a QR code image for certificate verification."""
     # Create verification URL with certificate number
     verify_data = f"cert={certificate_number}"
     if tracking_number:
         verify_data += f"&track={tracking_number}"
-    
-    # Get base URL from config for QR code generation
-    config = Config()
-    base_url = config.BASE_URL.rstrip('/')
+
+    # Get base URL from config or use provided base_url
+    if not base_url:
+        config = Config()
+        base_url = config.BASE_URL.rstrip('/')
+
     full_url = f"{base_url}/verify?{verify_data}"
-    
+
     # Generate QR code
     qr = qrcode.QRCode(
         version=1,
@@ -67,10 +69,10 @@ def _generate_qr_code(certificate_number, tracking_number=None):
     )
     qr.add_data(full_url)
     qr.make(fit=True)
-    
+
     # Create QR code image
     qr_image = qr.make_image(fill_color="#12335B", back_color="white")
-    
+
     # Convert to BytesIO for ReportLab
     qr_buffer = BytesIO()
     qr_image.save(qr_buffer, format="PNG")
@@ -215,7 +217,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
     pdf.line(margin, 32 * mm, PAGE_WIDTH - margin, 32 * mm)
     
     # Add QR code for verification (positioned in bottom right corner)
-    qr_code = _generate_qr_code(request_data['certificate_number'], request_data.get('tracking_number'))
+    qr_code = _generate_qr_code(request_data['certificate_number'], request_data.get('tracking_number'), base_url)
     if qr_code:
         qr_size = 22 * mm
         qr_x = PAGE_WIDTH - margin - qr_size - 5 * mm
@@ -256,7 +258,7 @@ def _add_enhanced_footer(pdf, request_data, margin):
         )
 
 
-def generate_barangay_clearance(request_data, output_path):
+def generate_barangay_clearance(request_data, output_path, base_url=None):
     """Create a formal Barangay Clearance PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -294,7 +296,7 @@ def generate_barangay_clearance(request_data, output_path):
     return output_path
 
 
-def generate_barangay_certification(request_data, output_path):
+def generate_barangay_certification(request_data, output_path, base_url=None):
     """Create a formal Barangay Certification PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -332,7 +334,7 @@ def generate_barangay_certification(request_data, output_path):
     return output_path
 
 
-def generate_certificate_of_residency(request_data, output_path):
+def generate_certificate_of_residency(request_data, output_path, base_url=None):
     """Create a Certificate of Residency PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -374,7 +376,7 @@ def generate_certificate_of_residency(request_data, output_path):
     return output_path
 
 
-def generate_certificate_of_indigency(request_data, output_path):
+def generate_certificate_of_indigency(request_data, output_path, base_url=None):
     """Create a Certificate of Indigency PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -414,7 +416,7 @@ def generate_certificate_of_indigency(request_data, output_path):
     return output_path
 
 
-def generate_business_closure_certification(request_data, output_path):
+def generate_business_closure_certification(request_data, output_path, base_url=None):
     """Create a Business Closure Certification PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -472,7 +474,7 @@ def generate_business_closure_certification(request_data, output_path):
     return output_path
 
 
-def generate_first_time_job_seeker_certification(request_data, output_path):
+def generate_first_time_job_seeker_certification(request_data, output_path, base_url=None):
     """Create a First Time Job Seeker Certification PDF from an approved pilot request."""
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -1657,7 +1657,7 @@ def advance_request(reference_number):
             temp_certificate_path = temp_dir / certificate_filename
             
             try:
-                generator_func(certificate_data, temp_certificate_path)
+                generator_func(certificate_data, temp_certificate_path, app.config.get("BASE_URL"))
             except Exception as error:
                 print(f"[ERROR] Certificate generation failed for {reference_number}: {error}")
                 flash("Certificate could not be generated. Please check that all required settings (logo, signatures) are configured in Settings.", "error")
@@ -1735,7 +1735,7 @@ def advance_request(reference_number):
             temp_certificate_path = temp_dir / clearance_request["certificate_filename"]
             
             try:
-                generator_func(certificate_data, temp_certificate_path)
+                generator_func(certificate_data, temp_certificate_path, app.config.get("BASE_URL"))
                 # Copy to regular directory for local development
                 CERTIFICATE_DIRECTORY.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(temp_certificate_path, CERTIFICATE_DIRECTORY / clearance_request["certificate_filename"])
